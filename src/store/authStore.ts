@@ -83,9 +83,14 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         const role = adminEmails.includes(firebaseUser.email ?? '') ? 'admin' : 'reader';
         useAuthStore.setState({ role, adminEmails, needsSetup: false, isLoading: false });
       }
-    } catch (error) {
-      console.error('Error fetching config:', error);
-      useAuthStore.setState({ role: 'reader', isLoading: false });
+    } catch (error: any) {
+      // If permission-denied, Firestore rules haven't been set up yet → show setup screen
+      if (error?.code === 'permission-denied') {
+        useAuthStore.setState({ role: null, needsSetup: true, adminEmails: [], isLoading: false });
+      } else {
+        console.error('Error fetching config:', error);
+        useAuthStore.setState({ role: 'reader', isLoading: false });
+      }
     }
   } else {
     useAuthStore.setState({ user: null, role: null, adminEmails: [], needsSetup: false, isLoading: false });
