@@ -30,15 +30,16 @@ const Login: React.FC = () => {
     setError('');
     setIsSubmitting(true);
     try {
-      const { setUser, setRole, admins } = useAuthStore.getState();
+      const { adminEmails } = useAuthStore.getState();
       
       // MOCK LOGIN if Firebase is not configured
       if (import.meta.env.VITE_FIREBASE_API_KEY === 'dummy_api_key' || !import.meta.env.VITE_FIREBASE_API_KEY) {
         setTimeout(() => {
-          // Simulate user
-          const isAdmin = admins.includes(email);
-          setUser({ uid: isAdmin ? 'mock-admin' : 'mock-reader', email, emailVerified: true } as any);
-          setRole(isAdmin ? 'admin' : 'reader');
+          const isAdmin = adminEmails.includes(email);
+          useAuthStore.setState({
+            user: { uid: isAdmin ? 'mock-admin' : 'mock-reader', email, emailVerified: true } as any,
+            role: isAdmin ? 'admin' : 'reader',
+          });
         }, 800);
         return;
       }

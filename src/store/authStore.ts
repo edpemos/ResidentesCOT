@@ -1,64 +1,93 @@
 import { create } from 'zustand';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
+
+const isMockMode = () =>
+  !import.meta.env.VITE_FIREBASE_API_KEY ||
+  import.meta.env.VITE_FIREBASE_API_KEY === 'dummy_api_key';
+
+const configDoc = () => doc(db, 'config', 'settings');
 
 interface AuthState {
   user: User | null;
   role: 'admin' | 'reader' | null;
   isLoading: boolean;
-  admins: string[];
-  setUser: (user: User | null) => void;
-  setRole: (role: 'admin' | 'reader' | null) => void;
-  addAdmin: (email: string) => void;
-  removeAdmin: (email: string) => void;
+  needsSetup: boolean;
+  adminEmails: string[];
+  initializeAsAdmin: () => Promise<void>;
+  addAdmin: (email: string) => Promise<void>;
+  removeAdmin: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   role: null,
   isLoading: true,
-  admins: ['admin@hospital.com'], // Default admin
-  setUser: (user) => set({ user }),
-  setRole: (role) => set({ role }),
-  addAdmin: (email) => set((state) => ({ admins: [...state.admins, email] })),
-  removeAdmin: (email) => set((state) => ({ admins: state.admins.filter(a => a !== email) })),
+  needsSetup: false,
+  adminEmails: isMockMode() ? ['admin@hospital.com'] : [],
+
+  initializeAsAdmin: async () => {
+    const { user } = get();
+    if (!user?.email) return;
+    const email = user.email;
+    await setDoc(configDoc(), { adminEmails: [email] });
+    set({ role: 'admin', needsSetup: false, adminEmails: [email] });
+  },
+
+  addAdmin: async (email: string) => {
+    if (isMockMode()) {
+      set(state => ({ adminEmails: [...state.adminEmails, email] }));
+      return;
+    }
+    await updateDoc(configDoc(), { adminEmails: arrayUnion(email) });
+    set(state => ({ adminEmails: [...state.adminEmails, email] }));
+  },
+
+  removeAdmin: async (email: string) => {
+    if (isMockMode()) {
+      set(state => ({ adminEmails: state.adminEmails.filter(e => e !== email) }));
+      return;
+    }
+    await updateDoc(configDoc(), { adminEmails: arrayRemove(email) });
+    set(state => ({ adminEmails: state.adminEmails.filter(e => e !== email) }));
+  },
+
   logout: async () => {
-    if (import.meta.env.VITE_FIREBASE_API_KEY === 'dummy_api_key' || !import.meta.env.VITE_FIREBASE_API_KEY) {
-      set({ user: null, role: null });
+    if (isMockMode()) {
+      set({ user: null, role: null, needsSetup: false });
       return;
     }
     await signOut(auth);
-    set({ user: null, role: null });
+    set({ user: null, role: null, adminEmails: [], needsSetup: false });
   },
 }));
 
-// Initialize auth listener
+// Auth state listener
 onAuthStateChanged(auth, async (firebaseUser) => {
-  const { setUser, setRole } = useAuthStore.getState();
-  
+  if (isMockMode()) {
+    useAuthStore.setState({ isLoading: false });
+    return;
+  }
+
   if (firebaseUser) {
-    setUser(firebaseUser);
+    useAuthStore.setState({ user: firebaseUser, isLoading: true });
     try {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        setRole(userData.role as 'admin' | 'reader');
+      const snap = await getDoc(configDoc());
+      if (!snap.exists()) {
+        useAuthStore.setState({ role: null, needsSetup: true, adminEmails: [], isLoading: false });
       } else {
-        setRole('reader'); // Default role if not found
+        const adminEmails: string[] = snap.data().adminEmails || [];
+        const role = adminEmails.includes(firebaseUser.email ?? '') ? 'admin' : 'reader';
+        useAuthStore.setState({ role, adminEmails, needsSetup: false, isLoading: false });
       }
     } catch (error) {
-      console.error("Error fetching user role:", error);
-      setRole('reader');
+      console.error('Error fetching config:', error);
+      useAuthStore.setState({ role: 'reader', isLoading: false });
     }
   } else {
-    setUser(null);
-    setRole(null);
+    useAuthStore.setState({ user: null, role: null, adminEmails: [], needsSetup: false, isLoading: false });
   }
-  
-  useAuthStore.setState({ isLoading: false });
 });

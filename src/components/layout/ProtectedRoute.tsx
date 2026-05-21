@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
-  const { user, role, isLoading } = useAuthStore();
+  const { user, role, isLoading, needsSetup } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -20,6 +20,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (needsSetup) {
+    return <Navigate to="/setup" replace />;
   }
 
   if (requiredRole && role !== requiredRole && role !== 'admin') {

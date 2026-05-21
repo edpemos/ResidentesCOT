@@ -6,7 +6,7 @@ import { Trash2, Plus, Edit2, X, Check } from 'lucide-react';
 import clsx from 'clsx';
 
 const Settings: React.FC = () => {
-  const { role, admins, addAdmin, removeAdmin } = useAuthStore();
+  const { role, adminEmails, addAdmin, removeAdmin } = useAuthStore();
   const isAdmin = role === 'admin';
   const { units, addUnit, updateUnit, deleteUnit } = useUnitStore();
 
@@ -174,7 +174,7 @@ const Settings: React.FC = () => {
             />
             <button 
               onClick={() => {
-                if (newAdminEmail.trim() && !admins.includes(newAdminEmail.trim())) {
+                if (newAdminEmail.trim() && !adminEmails.includes(newAdminEmail.trim())) {
                   addAdmin(newAdminEmail.trim());
                   setNewAdminEmail('');
                 }
@@ -188,10 +188,10 @@ const Settings: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {admins.map(adminEmail => (
+            {adminEmails.map((adminEmail: string) => (
               <div key={adminEmail} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
                 <span className="font-medium text-slate-800">{adminEmail}</span>
-                {admins.length > 1 && (
+                {adminEmails.length > 1 && (
                   <button 
                     onClick={() => {
                       if(window.confirm(`¿Quitar permisos de administrador a ${adminEmail}?`)) {
