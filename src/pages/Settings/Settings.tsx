@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useUnitStore } from '../../store/unitStore';
 import { useAuthStore } from '../../store/authStore';
-import { AVAILABLE_COLORS } from '../../utils/constants';
+import { AVAILABLE_COLORS, getColor } from '../../utils/constants';
 import { Trash2, Plus, Edit2, X, Check } from 'lucide-react';
 import clsx from 'clsx';
 
 const Settings: React.FC = () => {
-  const { role } = useAuthStore();
+  const { role, admins, addAdmin, removeAdmin } = useAuthStore();
   const isAdmin = role === 'admin';
   const { units, addUnit, updateUnit, deleteUnit } = useUnitStore();
 
@@ -14,7 +14,8 @@ const Settings: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
-  const [color, setColor] = useState(AVAILABLE_COLORS[0]);
+  const [color, setColor] = useState(AVAILABLE_COLORS[0].id);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
 
   if (!isAdmin) {
     return (
@@ -28,14 +29,14 @@ const Settings: React.FC = () => {
     setIsAdding(false);
     setEditingId(null);
     setName('');
-    setColor(AVAILABLE_COLORS[0]);
+    setColor(AVAILABLE_COLORS[0].id);
   };
 
   const handleEdit = (id: string) => {
     const unit = units.find(u => u.id === id);
     if (unit) {
       setName(unit.name);
-      setColor(unit.color);
+      setColor(unit.color); // unit.color is now a colorId string
       setEditingId(id);
       setIsAdding(false);
     }
@@ -97,13 +98,14 @@ const Settings: React.FC = () => {
                   <div className="flex flex-wrap gap-2 bg-white p-2 border border-slate-200 rounded-lg">
                     {AVAILABLE_COLORS.map(c => (
                       <button
-                        key={c}
-                        onClick={() => setColor(c)}
+                        key={c.id}
+                        title={c.label}
+                        onClick={() => setColor(c.id)}
                         className={clsx(
-                          "w-6 h-6 rounded-full border transition-transform", 
-                          c.split(' ')[0], 
-                          c.split(' ')[2],
-                          color === c ? 'scale-125 ring-2 ring-offset-1 ring-blue-400' : 'hover:scale-110'
+                          "w-6 h-6 rounded-full border-2 transition-transform",
+                          c.bg,
+                          c.border,
+                          color === c.id ? 'scale-125 ring-2 ring-offset-1 ring-blue-400' : 'hover:scale-110'
                         )}
                       />
                     ))}
@@ -125,7 +127,7 @@ const Settings: React.FC = () => {
             {units.map(unit => (
               <div key={unit.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <span className={clsx("w-6 h-6 rounded-full border", unit.color.split(' ')[0], unit.color.split(' ')[2])}></span>
+                  <span className={clsx("w-6 h-6 rounded-full border-2", getColor(unit.color).bg, getColor(unit.color).border)}></span>
                   <span className="font-medium text-slate-800">{unit.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -149,6 +151,58 @@ const Settings: React.FC = () => {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ADMINS MANAGEMENT SECTION */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+          <h3 className="font-semibold text-slate-800">Administradores del Sistema</h3>
+        </div>
+        
+        <div className="p-6">
+          <div className="flex gap-4 mb-6">
+            <input 
+              type="email" 
+              value={newAdminEmail} 
+              onChange={e => setNewAdminEmail(e.target.value)} 
+              className="flex-1 border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm" 
+              placeholder="nuevo.admin@hospital.com" 
+            />
+            <button 
+              onClick={() => {
+                if (newAdminEmail.trim() && !admins.includes(newAdminEmail.trim())) {
+                  addAdmin(newAdminEmail.trim());
+                  setNewAdminEmail('');
+                }
+              }}
+              disabled={!newAdminEmail.trim()}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4" />
+              Añadir Admin
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {admins.map(adminEmail => (
+              <div key={adminEmail} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <span className="font-medium text-slate-800">{adminEmail}</span>
+                {admins.length > 1 && (
+                  <button 
+                    onClick={() => {
+                      if(window.confirm(`¿Quitar permisos de administrador a ${adminEmail}?`)) {
+                        removeAdmin(adminEmail);
+                      }
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-red-600 bg-white border border-slate-200 hover:border-red-200 rounded-md"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>

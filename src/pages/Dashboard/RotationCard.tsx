@@ -5,6 +5,7 @@ import { useUnitStore } from '../../store/unitStore';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/authStore';
 import { useRotationStore } from '../../store/rotationStore';
+import { getColor } from '../../utils/constants';
 import { Plane } from 'lucide-react';
 
 interface RotationCardProps {
@@ -25,7 +26,7 @@ const RotationCard: React.FC<RotationCardProps> = ({ rotation, index }) => {
   };
 
   const unit = units.find(u => u.id === rotation.unitId);
-  const colorClass = unit ? unit.color : 'bg-slate-100 text-slate-800 border-slate-200';
+  const color = getColor(unit?.color ?? 'slate');
   const name = unit ? unit.name : 'Desconocida';
 
   return (
@@ -37,8 +38,8 @@ const RotationCard: React.FC<RotationCardProps> = ({ rotation, index }) => {
           {...provided.dragHandleProps}
           onDoubleClick={handleDoubleClick}
           className={clsx(
-            'relative w-full h-full min-h-[2.5rem] rounded-md border text-[10px] leading-tight font-semibold flex items-center justify-center p-0.5 text-center transition-shadow shadow-sm',
-            colorClass,
+            `relative w-full h-full min-h-[2.5rem] rounded-md border text-[10px] leading-tight font-semibold flex items-center justify-center p-0.5 text-center transition-shadow shadow-sm`,
+            color.bg, color.text, color.border,
             snapshot.isDragging && 'shadow-lg ring-2 ring-blue-400 z-50',
             !isAdmin && 'cursor-default'
           )}

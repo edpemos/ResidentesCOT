@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useUnitStore } from '../../store/unitStore';
+import { getColor } from '../../utils/constants';
 import clsx from 'clsx';
 
 const CategoryFilter: React.FC = () => {
@@ -27,7 +28,7 @@ const CategoryFilter: React.FC = () => {
           className={clsx(
             "px-4 py-1.5 rounded-full text-sm font-medium transition-colors border",
             selectedCategory === unit.name 
-              ? unit.color.replace('border-', 'border-').replace('text-', 'text-').replace('bg-', 'bg-').split(' ')[0] + ' text-slate-900 border-2'
+              ? clsx(getColor(unit.color).bg, 'text-slate-900 border-2', getColor(unit.color).border)
               : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
           )}
           style={{

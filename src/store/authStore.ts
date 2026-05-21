@@ -8,8 +8,11 @@ interface AuthState {
   user: User | null;
   role: 'admin' | 'reader' | null;
   isLoading: boolean;
+  admins: string[];
   setUser: (user: User | null) => void;
   setRole: (role: 'admin' | 'reader' | null) => void;
+  addAdmin: (email: string) => void;
+  removeAdmin: (email: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -17,8 +20,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   role: null,
   isLoading: true,
+  admins: ['admin@hospital.com'], // Default admin
   setUser: (user) => set({ user }),
   setRole: (role) => set({ role }),
+  addAdmin: (email) => set((state) => ({ admins: [...state.admins, email] })),
+  removeAdmin: (email) => set((state) => ({ admins: state.admins.filter(a => a !== email) })),
   logout: async () => {
     if (import.meta.env.VITE_FIREBASE_API_KEY === 'dummy_api_key' || !import.meta.env.VITE_FIREBASE_API_KEY) {
       set({ user: null, role: null });

@@ -4,6 +4,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { useRotationStore } from '../../store/rotationStore';
 import { useUnitStore } from '../../store/unitStore';
 import { useAuthStore } from '../../store/authStore';
+import { getColor } from '../../utils/constants';
 import { MONTHS } from '../../utils/constants';
 import RotationCard from './RotationCard';
 import clsx from 'clsx';
@@ -97,7 +98,9 @@ const Board: React.FC = () => {
                             {...provided.dragHandleProps}
                             className={clsx(
                               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm transition-transform cursor-grab",
-                              unit.color,
+                              getColor(unit.color).bg,
+                              getColor(unit.color).text,
+                              getColor(unit.color).border,
                               snapshot.isDragging ? "shadow-lg scale-105 z-50 ring-2 ring-blue-400" : "hover:-translate-y-0.5"
                             )}
                             style={provided.draggableProps.style}
