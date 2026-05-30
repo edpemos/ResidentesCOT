@@ -14,7 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       <div className="flex items-center">
         <button 
           onClick={toggleSidebar}
-          className="p-2 mr-3 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md"
+          className="p-2 mr-3 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md lg:hidden"
         >
           <Menu className="w-5 h-5" />
         </button>
