@@ -33,23 +33,23 @@ const Dashboard: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 uppercase">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 uppercase font-heading">
             {viewMode === 'academicYear' 
               ? `Pizarra de Rotaciones ${currentYear}/${currentYear + 1}` 
               : `Pizarra de Rotaciones — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
           </h2>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Gestión visual del plan formativo anual
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 animate-fade-in">
           <button 
             onClick={() => setShowCounters(!showCounters)}
-            className={`flex items-center gap-2 border px-4 py-2 rounded-lg transition-all duration-200 shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 border px-4 py-2 rounded-lg transition-all duration-200 shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer select-none ${
               showCounters 
-                ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100" 
-                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-450" 
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:bg-slate-800"
             }`}
           >
             <BarChart3 className="w-4 h-4 flex-shrink-0" />
@@ -59,7 +59,7 @@ const Dashboard: React.FC = () => {
           {isAdmin && (
             <button 
               onClick={() => setIsConfigOpen(true)}
-              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer"
+              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:bg-slate-800 transition-colors shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer select-none"
             >
               <Settings2 className="w-4 h-4 flex-shrink-0" />
               Configurar Residentes

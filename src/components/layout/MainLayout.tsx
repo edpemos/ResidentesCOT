@@ -22,7 +22,7 @@ const MainLayout: React.FC = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 

@@ -10,12 +10,37 @@
   --font-heading: 'Outfit', sans-serif;
 }
 
+@variant dark (&:where(.dark, .dark *));
+
 body {
   background-color: var(--color-bg-base);
   color: #334155;
   font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark,
+.dark body {
+  background-color: #0b0f19;
+  color: #cbd5e1;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+}
+
+/* Custom scrollbars in dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

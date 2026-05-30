@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Library, Stethoscope, X, Settings, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Library, Stethoscope, X, Settings, User, LogOut, Sun, Moon } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/authStore';
 
@@ -12,6 +12,24 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const { user, role, logout } = useAuthStore();
   const isAdmin = role === 'admin';
+
+  const [isDark, setIsDark] = React.useState(() => {
+    return document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
+  });
+
+  React.useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+  };
 
   const navItems = [
     { name: 'Pizarra de Rotaciones', path: '/dashboard', icon: LayoutDashboard },
@@ -83,6 +101,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         {/* User Info & Logout Section */}
         <div className="p-3 border-t border-slate-800/40 shrink-0 bg-slate-950/20">
           <div className="flex flex-col gap-2">
+            
+            {/* Theme Toggle Button */}
+            <div className="px-1 mb-1">
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 hover:bg-slate-800/40 text-slate-400 hover:text-white cursor-pointer select-none border border-transparent hover:border-slate-800/20"
+              >
+                <div className="flex items-center gap-2.5">
+                  {isDark ? (
+                    <Moon className="w-4 h-4 text-indigo-400 animate-pulse" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+                  )}
+                  <span className="transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-40 overflow-hidden whitespace-nowrap">
+                    {isDark ? 'Modo Oscuro' : 'Modo Claro'}
+                  </span>
+                </div>
+                <div className="transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-6 h-3.5 bg-slate-800 rounded-full p-0.5 relative">
+                  <div 
+                    className={clsx(
+                      "w-2.5 h-2.5 rounded-full transition-all duration-300 shadow-sm",
+                      isDark ? "bg-indigo-400 translate-x-2" : "bg-amber-400 translate-x-0"
+                    )}
+                  />
+                </div>
+              </button>
+            </div>
             
             {/* User Profile Info */}
             <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg bg-slate-850/40 border border-slate-800/30 overflow-hidden min-h-[48px] shadow-inner">

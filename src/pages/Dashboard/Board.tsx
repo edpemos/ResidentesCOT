@@ -169,13 +169,14 @@ const Board: React.FC = () => {
     : getSingleResidentRows();
 
   const selectedResident = residents.find(r => r.id === selectedResidentId);
+
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative h-full">
+      <div className="bg-white dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800/80 overflow-hidden flex flex-col relative h-full backdrop-blur-md">
       
       {/* 💳 HEADER CON BOTÓN DE FILTRO */}
-      <div className="px-5 py-4 border-b border-slate-150 bg-gradient-to-r from-slate-50/50 to-white flex flex-wrap gap-4 items-center justify-between">
-        <h3 className="font-extrabold text-slate-800 tracking-wide text-base uppercase font-heading">
+      <div className="px-5 py-4 border-b border-slate-150 dark:border-slate-800 bg-gradient-to-r from-slate-50/50 dark:from-slate-950/20 to-white dark:to-slate-900/35 flex flex-wrap gap-4 items-center justify-between">
+        <h3 className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide text-base uppercase font-heading">
           {viewMode === 'academicYear' 
             ? `PIZARRA DE ROTACIONES ${currentYear}/${currentYear + 1}` 
             : `PIZARRA DE ROTACIONES — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
@@ -187,7 +188,7 @@ const Board: React.FC = () => {
             "flex items-center gap-2 px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm select-none",
             filtersExpanded 
               ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/15" 
-              : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-850"
+              : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-850 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:bg-slate-800"
           )}
         >
           {filtersExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Filter className="w-3.5 h-3.5" />}
@@ -198,23 +199,23 @@ const Board: React.FC = () => {
       {/* 🛠️ FILTER CONTROL BAR PANEL */}
       <div 
         className={clsx(
-          "transition-all duration-300 ease-in-out overflow-hidden bg-slate-50/50 space-y-4",
+          "transition-all duration-300 ease-in-out overflow-hidden bg-slate-50/50 dark:bg-slate-950/40 space-y-4",
           filtersExpanded 
-            ? "max-h-[500px] opacity-100 p-5 border-b border-slate-100" 
+            ? "max-h-[500px] opacity-100 p-5 border-b border-slate-100 dark:border-slate-800" 
             : "max-h-0 opacity-0 p-0 border-b-0 pointer-events-none"
         )}
       >
         
         {/* Toggle Mode Buttons */}
         <div className="flex flex-wrap gap-2 items-center justify-between">
-          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setViewMode('academicYear')}
               className={clsx(
                 "flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer",
                 viewMode === 'academicYear'
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-250"
               )}
             >
               <Calendar className="w-4 h-4" />
@@ -230,8 +231,8 @@ const Board: React.FC = () => {
               className={clsx(
                 "flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer",
                 viewMode === 'resident'
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-250"
               )}
             >
               <User className="w-4 h-4" />
@@ -239,8 +240,8 @@ const Board: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-slate-50 border border-slate-150 px-3 py-1.5 rounded-lg">
-            <Info className="w-4 h-4 text-slate-400" />
+          <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800 px-3 py-1.5 rounded-lg">
+            <Info className="w-4 h-4 text-slate-450" />
             Las rotaciones académicas comienzan en Junio y terminan en Mayo.
           </div>
         </div>
@@ -249,7 +250,7 @@ const Board: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           {viewMode === 'academicYear' ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtrar Curso:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Filtrar Curso:</span>
               <div className="flex flex-wrap gap-1.5">
                 {academicYears.map((year) => (
                   <button
@@ -259,7 +260,7 @@ const Board: React.FC = () => {
                       "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border",
                       currentYear === year
                         ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/20"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:bg-slate-800"
                     )}
                   >
                     {year}/{year + 1}
@@ -269,11 +270,11 @@ const Board: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center gap-2 w-full max-w-md">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0">Residente:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider shrink-0">Residente:</span>
               <select
                 value={selectedResidentId}
                 onChange={(e) => setSelectedResidentId(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-medium px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 text-sm font-medium px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {residents.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -389,24 +390,24 @@ const Board: React.FC = () => {
                   const assignedPercentage = Math.min(100, Math.round((totalRotations / 12) * 100));
                   
                   return (
-                    <div key={resident.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 rounded-lg transition-colors">
-                      <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] -ml-5 pl-5 select-none">
+                    <div key={resident.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 dark:hover:bg-slate-800/15 rounded-lg transition-colors">
+                      <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-5 pl-5 select-none">
                         <div className="flex items-center gap-2">
                           <span className={clsx(
                             "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase", 
                             resident.id.startsWith('temp-')
-                              ? 'bg-slate-100 text-slate-450 border border-slate-200 border-dashed'
-                              : resident.year === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200'
-                              : resident.year === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                              : resident.year === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : resident.year === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-slate-100 text-slate-450 border border-slate-200 border-dashed dark:bg-slate-950 dark:text-slate-500 dark:border-slate-800/60'
+                              : resident.year === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/35 dark:text-teal-400 dark:border-teal-900/35'
+                              : resident.year === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/35 dark:text-sky-400 dark:border-sky-900/35'
+                              : resident.year === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/35 dark:text-indigo-400 dark:border-indigo-900/35'
+                              : resident.year === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/35 dark:text-purple-400 dark:border-purple-900/35'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/35 dark:text-rose-400 dark:border-rose-900/35'
                           )}>
                             {resident.year}
                           </span>
                           <span className={clsx(
                             "text-xs font-bold truncate tracking-wide",
-                            resident.id.startsWith('temp-') ? 'text-slate-400 italic font-medium' : 'text-slate-700'
+                            resident.id.startsWith('temp-') ? 'text-slate-400 italic font-medium' : 'text-slate-700 dark:text-slate-300'
                           )} title={`${resident.firstName} ${resident.lastName}`}>
                             {resident.firstName} {resident.lastName}
                           </span>
@@ -415,7 +416,7 @@ const Board: React.FC = () => {
                         {/* Progress Bar (ex. "9/12 meses") */}
                         {!resident.id.startsWith('temp-') && (
                           <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
-                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
                               <div 
                                 className={clsx(
                                   "h-full rounded-full transition-all duration-500",
@@ -424,7 +425,7 @@ const Board: React.FC = () => {
                                 style={{ width: `${assignedPercentage}%` }}
                               />
                             </div>
-                            <span className="text-[8px] font-extrabold text-slate-400 tracking-tighter w-8 flex-shrink-0 text-right">
+                            <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-8 flex-shrink-0 text-right">
                               {totalRotations}/12m
                             </span>
                           </div>
@@ -452,8 +453,8 @@ const Board: React.FC = () => {
                                       : clsx(
                                           "border-2 border-dashed",
                                           snapshot.isDraggingOver 
-                                            ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
-                                            : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                            ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm dark:bg-blue-950/20 dark:border-blue-700/50" 
+                                            : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-800/80 dark:bg-slate-950/20 dark:hover:border-slate-700 dark:hover:bg-slate-950/45"
                                         )
                                   )}
                                 >
@@ -484,27 +485,27 @@ const Board: React.FC = () => {
                     const assignedPercentage = Math.min(100, Math.round((totalRotations / 12) * 100));
 
                     return (
-                      <div key={row.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 rounded-lg transition-colors">
-                        <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] -ml-5 pl-5 select-none">
+                      <div key={row.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 dark:hover:bg-slate-800/15 rounded-lg transition-colors">
+                        <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-5 pl-5 select-none">
                           <div className="flex items-center gap-2">
                             <span className={clsx(
                               "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase",
-                              row.level === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200'
-                              : row.level === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                              : row.level === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : row.level === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              row.level === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/35 dark:text-teal-400 dark:border-teal-900/35'
+                              : row.level === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/35 dark:text-sky-400 dark:border-sky-900/35'
+                              : row.level === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/35 dark:text-indigo-400 dark:border-indigo-900/35'
+                              : row.level === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/35 dark:text-purple-400 dark:border-purple-900/35'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/35 dark:text-rose-400 dark:border-rose-900/35'
                             )}>
                               {row.level}
                             </span>
-                            <span className="text-xs font-bold truncate text-slate-700 tracking-wide font-heading" title={row.label}>
+                            <span className="text-xs font-bold truncate text-slate-700 dark:text-slate-350 tracking-wide font-heading" title={row.label}>
                               {row.label}
                             </span>
                           </div>
 
                           {/* Progress Bar (ex. "9/12 meses") */}
                           <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
-                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
                               <div 
                                 className={clsx(
                                   "h-full rounded-full transition-all duration-500",
@@ -513,7 +514,7 @@ const Board: React.FC = () => {
                                 style={{ width: `${assignedPercentage}%` }}
                               />
                             </div>
-                            <span className="text-[8px] font-extrabold text-slate-400 tracking-tighter w-8 flex-shrink-0 text-right">
+                            <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-8 flex-shrink-0 text-right">
                               {totalRotations}/12m
                             </span>
                           </div>
@@ -540,8 +541,8 @@ const Board: React.FC = () => {
                                         : clsx(
                                             "border-2 border-dashed",
                                             snapshot.isDraggingOver 
-                                              ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
-                                              : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                              ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm dark:bg-blue-950/20 dark:border-blue-700/50" 
+                                              : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-800/80 dark:bg-slate-950/20 dark:hover:border-slate-700 dark:hover:bg-slate-950/45"
                                           )
                                     )}
                                   >
