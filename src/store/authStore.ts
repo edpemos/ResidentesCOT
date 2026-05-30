@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   role: null,
   isLoading: true,
   needsSetup: false,
-  adminEmails: isMockMode() ? ['admin@hospital.com'] : [],
+  adminEmails: isMockMode() ? ['admin@hospital.com', 'edpemos@gmail.com'] : [],
 
   initializeAsAdmin: async () => {
     const { user } = get();

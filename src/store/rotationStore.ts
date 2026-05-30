@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Resident, ResidentYear, Rotation } from '../types';
 import { differenceInYears, parseISO } from 'date-fns';
+import { MOCK_RESIDENTS, MOCK_ROTATIONS } from './mockData';
 
 export const calculateResidentYear = (startDate: string): ResidentYear => {
   const yearsDiff = differenceInYears(new Date(), parseISO(startDate));
@@ -11,28 +12,6 @@ export const calculateResidentYear = (startDate: string): ResidentYear => {
   if (yearsDiff < 5) return 'R5';
   return 'Graduado';
 };
-
-// Fechas simuladas para que el cálculo coincida con R1-R5 actuales
-const now = new Date();
-const getMockDate = (yearsAgo: number) => {
-  const d = new Date(now);
-  d.setFullYear(now.getFullYear() - yearsAgo);
-  d.setMonth(now.getMonth() - 1); // Empezó el mes pasado
-  return d.toISOString();
-};
-
-const MOCK_RESIDENTS: Resident[] = [
-  { id: '1', firstName: 'Alejandro', lastName: 'Gómez', email: 'agomez@hospital.com', startDate: getMockDate(4), endDate: getMockDate(-1), year: 'R5' },
-  { id: '2', firstName: 'María', lastName: 'Silva', email: 'msilva@hospital.com', startDate: getMockDate(3), endDate: getMockDate(-2), year: 'R4' },
-  { id: '3', firstName: 'Carlos', lastName: 'Ruiz', email: 'cruiz@hospital.com', startDate: getMockDate(2), endDate: getMockDate(-3), year: 'R3' },
-  { id: '4', firstName: 'Laura', lastName: 'Vega', email: 'lvega@hospital.com', startDate: getMockDate(1), endDate: getMockDate(-4), year: 'R2' },
-  { id: '5', firstName: 'David', lastName: 'Castro', email: 'dcastro@hospital.com', startDate: getMockDate(0), endDate: getMockDate(-5), year: 'R1' },
-];
-
-const MOCK_ROTATIONS: Rotation[] = [
-  { id: 'r1', residentId: '1', month: 0, year: 2026, unitId: 'u1', isVacation: false },
-  { id: 'r2', residentId: '1', month: 1, year: 2026, unitId: 'u2', isVacation: false },
-];
 
 interface RotationState {
   residents: Resident[];
@@ -55,8 +34,8 @@ interface RotationState {
 }
 
 export const useRotationStore = create<RotationState>((set) => ({
-  residents: MOCK_RESIDENTS,
-  rotations: MOCK_ROTATIONS,
+  residents: MOCK_RESIDENTS.map(r => ({ ...r, year: calculateResidentYear(r.startDate) as any })),
+  rotations: MOCK_ROTATIONS.map(r => ({ ...r, isVacation: false })),
   currentYear: new Date().getFullYear(),
   isLoading: false,
 
