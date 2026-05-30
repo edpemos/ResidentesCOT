@@ -95,21 +95,47 @@ const Settings: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Color Identificativo</label>
-                  <div className="flex flex-wrap gap-2 bg-white p-2 border border-slate-200 rounded-lg">
-                    {AVAILABLE_COLORS.map(c => (
-                      <button
-                        key={c.id}
-                        title={c.label}
-                        onClick={() => setColor(c.id)}
-                        className={clsx(
-                          "w-6 h-6 rounded-full border-2 transition-transform",
-                          c.bg,
-                          c.border,
-                          color === c.id ? 'scale-125 ring-2 ring-offset-1 ring-blue-400' : 'hover:scale-110'
-                        )}
-                      />
-                    ))}
+                  <div className="grid grid-cols-10 gap-1 bg-white p-2.5 border border-slate-200 rounded-lg max-w-sm">
+                    {Array.from({ length: 6 }).map((_, shadeIdx) => {
+                      const colorFamilies = [
+                        AVAILABLE_COLORS.slice(0, 6),   // Rojo
+                        AVAILABLE_COLORS.slice(6, 12),  // Naranja
+                        AVAILABLE_COLORS.slice(12, 18), // Amarillo
+                        AVAILABLE_COLORS.slice(18, 24), // Verde
+                        AVAILABLE_COLORS.slice(24, 30), // Cian
+                        AVAILABLE_COLORS.slice(30, 36), // Aciano
+                        AVAILABLE_COLORS.slice(36, 42), // Azul
+                        AVAILABLE_COLORS.slice(42, 48), // Púrpura
+                        AVAILABLE_COLORS.slice(48, 54), // Magenta
+                        AVAILABLE_COLORS.slice(54, 60), // Gris
+                      ];
+
+                      return (
+                        <React.Fragment key={shadeIdx}>
+                          {colorFamilies.map((familyColors) => {
+                            const c = familyColors[shadeIdx];
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                title={c.label}
+                                onClick={() => setColor(c.id)}
+                                className={clsx(
+                                  "w-6 h-6 rounded-md border transition-transform cursor-pointer",
+                                  c.bg,
+                                  c.border,
+                                  color === c.id ? 'scale-110 ring-2 ring-offset-1 ring-blue-500 z-10 border-white shadow-md' : 'hover:scale-110'
+                                )}
+                              />
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1.5">
+                    Gama cromática de Google Sheets: Columnas por familias de color, filas por niveles de intensidad.
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">

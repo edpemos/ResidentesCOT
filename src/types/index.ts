@@ -26,6 +26,8 @@ export interface Unit {
   color: string; // Tailwind class
 }
 
+export type RotationType = 'interna-cot' | 'interna-hospital' | 'externa';
+
 export interface Rotation {
   id: string;
   residentId: string;
@@ -33,6 +35,7 @@ export interface Rotation {
   year: number;
   unitId: string;
   isVacation: boolean;
+  type?: RotationType;
 }
 
 export interface Session {

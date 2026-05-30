@@ -122,7 +122,8 @@ export const useRotationStore = create<RotationState>((set, get) => ({
             month: rot.month,
             year: rot.year,
             unitId: rot.unitId,
-            isVacation: false
+            isVacation: false,
+            type: 'interna-cot'
           });
         });
 
@@ -233,7 +234,8 @@ export const useRotationStore = create<RotationState>((set, get) => ({
             month: tRot.month,
             year: tRot.year,
             unitId: tRot.unitId,
-            isVacation: tRot.isVacation
+            isVacation: tRot.isVacation,
+            type: tRot.type ?? 'interna-cot'
           });
         }
         batch.set(doc(db, 'rotations', sourceRotation.id), {
@@ -241,7 +243,8 @@ export const useRotationStore = create<RotationState>((set, get) => ({
           month: sourceRotation.month,
           year: sourceRotation.year,
           unitId: sourceRotation.unitId,
-          isVacation: sourceRotation.isVacation
+          isVacation: sourceRotation.isVacation,
+          type: sourceRotation.type ?? 'interna-cot'
         });
         batch.commit().catch(err => console.error('Error syncing moved rotation to Firestore:', err));
       }
