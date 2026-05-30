@@ -8,7 +8,7 @@ import { getColor } from '../../utils/constants';
 import { MONTHS } from '../../utils/constants';
 import RotationCard from './RotationCard';
 import clsx from 'clsx';
-import { GripVertical, Calendar, User, Info, EyeOff, Filter, Trash2 } from 'lucide-react';
+import { GripVertical, Calendar, User, Info, EyeOff, Filter, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import type { Resident } from '../../types';
 
 // Academic month order: June (5) to May (4)
@@ -34,6 +34,7 @@ const Board: React.FC = () => {
   const isAdmin = role === 'admin';
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [bankExpanded, setBankExpanded] = useState(true);
   const [isDraggingRotation, setIsDraggingRotation] = useState(false);
 
   const handleDragStart = (start: any) => {
@@ -291,43 +292,71 @@ const Board: React.FC = () => {
           {/* 🗂️ BANK OF ROTATIONS (Admin template bank) */}
           {isAdmin && (
             <div className="p-4 bg-slate-50 border-b border-slate-200 min-w-[960px]">
-              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                Banco de Especialidades (Arrastra las tarjetas a la pizarra para colocarlas)
-              </h4>
-              <Droppable droppableId="unit-bank" direction="horizontal" isDropDisabled={true}>
-                {(provided) => (
-                  <div 
-                    ref={provided.innerRef} 
-                    {...provided.droppableProps}
-                    className="flex flex-wrap gap-2"
-                  >
-                    {units.map((unit, index) => (
-                      <Draggable key={`bank-${unit.id}`} draggableId={`bank-${unit.id}`} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={clsx(
-                              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm transition-all cursor-grab",
-                              getColor(unit.color).bg,
-                              getColor(unit.color).text,
-                              getColor(unit.color).border,
-                              snapshot.isDragging ? "shadow-lg scale-105 z-50 ring-2 ring-blue-400" : "hover:-translate-y-0.5"
-                            )}
-                            style={provided.draggableProps.style}
-                          >
-                            <GripVertical className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
-                            {unit.name}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
+              
+              {/* Sleek Clickable Accordion Header */}
+              <div 
+                onClick={() => setBankExpanded(!bankExpanded)}
+                className="flex items-center justify-between cursor-pointer select-none group/bank pb-1"
+              >
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-slate-550 uppercase tracking-wider group-hover/bank:text-slate-700 transition-colors">
+                    Banco de Especialidades (Arrastra las tarjetas a la pizarra para colocarlas)
+                  </h4>
+                  <span className="text-[10px] text-slate-400 font-medium opacity-0 group-hover/bank:opacity-100 transition-opacity">
+                    ({bankExpanded ? "haz clic para contraer" : "haz clic para desplegar"})
+                  </span>
+                </div>
+                {bankExpanded 
+                  ? <ChevronUp className="w-4 h-4 text-slate-400 group-hover/bank:text-slate-600 transition-colors" /> 
+                  : <ChevronDown className="w-4 h-4 text-slate-400 group-hover/bank:text-slate-600 transition-colors" />
+                }
+              </div>
+
+              {/* Collapsible Content with Smooth Transitions */}
+              <div 
+                className={clsx(
+                  "transition-all duration-300 ease-in-out overflow-hidden",
+                  bankExpanded 
+                    ? "max-h-[300px] opacity-100 mt-3" 
+                    : "max-h-0 opacity-0 mt-0 pointer-events-none"
                 )}
-              </Droppable>
-              <p className="text-xs text-slate-400 mt-2">Arrastra una rotación al contenedor de basura que aparecerá abajo para eliminarla.</p>
+              >
+                <Droppable droppableId="unit-bank" direction="horizontal" isDropDisabled={true}>
+                  {(provided) => (
+                    <div 
+                      ref={provided.innerRef} 
+                      {...provided.droppableProps}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {units.map((unit, index) => (
+                        <Draggable key={`bank-${unit.id}`} draggableId={`bank-${unit.id}`} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={clsx(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm transition-all cursor-grab",
+                                getColor(unit.color).bg,
+                                getColor(unit.color).text,
+                                getColor(unit.color).border,
+                                snapshot.isDragging ? "shadow-lg scale-105 z-50 ring-2 ring-blue-400" : "hover:-translate-y-0.5"
+                              )}
+                              style={provided.draggableProps.style}
+                            >
+                              <GripVertical className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
+                              {unit.name}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+                <p className="text-xs text-slate-400 mt-2">Arrastra una rotación al contenedor de basura que aparecerá abajo para eliminarla.</p>
+              </div>
+
             </div>
           )}
 
