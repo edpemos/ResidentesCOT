@@ -446,10 +446,15 @@ const Board: React.FC = () => {
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
                                   className={clsx(
-                                    "h-11 rounded-lg border-2 border-dashed transition-all duration-200 relative flex items-center justify-center p-0.5",
-                                    snapshot.isDraggingOver 
-                                      ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
-                                      : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                    "h-11 rounded-lg transition-all duration-200 relative flex items-center justify-center p-0.5",
+                                    rotation
+                                      ? "border-transparent bg-transparent"
+                                      : clsx(
+                                          "border-2 border-dashed",
+                                          snapshot.isDraggingOver 
+                                            ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
+                                            : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                        )
                                   )}
                                 >
                                   {rotation ? (
@@ -529,10 +534,15 @@ const Board: React.FC = () => {
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
                                     className={clsx(
-                                      "h-11 rounded-lg border-2 border-dashed transition-all duration-200 relative flex items-center justify-center p-0.5",
-                                      snapshot.isDraggingOver 
-                                        ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
-                                        : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                      "h-11 rounded-lg transition-all duration-200 relative flex items-center justify-center p-0.5",
+                                      rotation
+                                        ? "border-transparent bg-transparent"
+                                        : clsx(
+                                            "border-2 border-dashed",
+                                            snapshot.isDraggingOver 
+                                              ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
+                                              : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                          )
                                     )}
                                   >
                                     {rotation ? (
