@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import { useAuthStore } from '../../store/authStore';
+import { useRotationStore } from '../../store/rotationStore';
+import { useUnitStore } from '../../store/unitStore';
 
 const MainLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user } = useAuthStore();
+  const { initializeStore } = useRotationStore();
+  const { loadUnits } = useUnitStore();
+
+  useEffect(() => {
+    if (user) {
+      loadUnits();
+      initializeStore();
+    }
+  }, [user, loadUnits, initializeStore]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
