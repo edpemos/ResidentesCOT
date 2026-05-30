@@ -19,14 +19,15 @@ export interface Resident {
   year: ResidentYear; // Calculado dinámicamente
 }
 
+export type UnitType = 'interna' | 'interna-hjsd' | 'externa';
+
 // Unidades disponibles
 export interface Unit {
   id: string;
   name: string;
   color: string; // Tailwind class
+  type?: UnitType;
 }
-
-export type RotationType = 'interna-cot' | 'interna-hospital' | 'externa';
 
 export interface Rotation {
   id: string;
@@ -35,7 +36,6 @@ export interface Rotation {
   year: number;
   unitId: string;
   isVacation: boolean;
-  type?: RotationType;
 }
 
 export interface Session {

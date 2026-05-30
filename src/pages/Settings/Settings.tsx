@@ -15,6 +15,7 @@ const Settings: React.FC = () => {
 
   const [name, setName] = useState('');
   const [color, setColor] = useState(AVAILABLE_COLORS[0].id);
+  const [type, setType] = useState<'interna' | 'interna-hjsd' | 'externa'>('interna');
   const [newAdminEmail, setNewAdminEmail] = useState('');
 
   if (!isAdmin) {
@@ -30,6 +31,7 @@ const Settings: React.FC = () => {
     setEditingId(null);
     setName('');
     setColor(AVAILABLE_COLORS[0].id);
+    setType('interna');
   };
 
   const handleEdit = (id: string) => {
@@ -37,6 +39,7 @@ const Settings: React.FC = () => {
     if (unit) {
       setName(unit.name);
       setColor(unit.color); // unit.color is now a colorId string
+      setType(unit.type ?? 'interna');
       setEditingId(id);
       setIsAdding(false);
     }
@@ -45,9 +48,9 @@ const Settings: React.FC = () => {
   const handleSave = () => {
     if (!name.trim()) return;
     if (editingId) {
-      updateUnit(editingId, { name, color });
+      updateUnit(editingId, { name, color, type });
     } else {
-      addUnit({ name, color });
+      addUnit({ name, color, type });
     }
     resetForm();
   };
@@ -67,7 +70,7 @@ const Settings: React.FC = () => {
           {!isAdding && !editingId && (
             <button 
               onClick={() => setIsAdding(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 text-sm font-medium"
+              className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 text-sm font-medium cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Añadir Unidad
@@ -81,17 +84,60 @@ const Settings: React.FC = () => {
               <h4 className="font-semibold text-slate-800 mb-4">
                 {editingId ? 'Editar Unidad' : 'Nueva Unidad'}
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Unidad</label>
-                  <input 
-                    type="text" 
-                    value={name} 
-                    onChange={e => setName(e.target.value)} 
-                    className="w-full border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
-                    placeholder="Ej. Traumatología Deportiva" 
-                    autoFocus
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Unidad</label>
+                    <input 
+                      type="text" 
+                      value={name} 
+                      onChange={e => setName(e.target.value)} 
+                      className="w-full border border-slate-350 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                      placeholder="Ej. Traumatología Deportiva" 
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo de Rotación</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setType('interna')}
+                        className={clsx(
+                          "flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all cursor-pointer text-center",
+                          type === 'interna'
+                            ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50"
+                        )}
+                      >
+                        Interna
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setType('interna-hjsd')}
+                        className={clsx(
+                          "flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all cursor-pointer text-center",
+                          type === 'interna-hjsd'
+                            ? "bg-slate-700 border-slate-700 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50"
+                        )}
+                      >
+                        Interna HJSD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setType('externa')}
+                        className={clsx(
+                          "flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all cursor-pointer text-center",
+                          type === 'externa'
+                            ? "bg-amber-600 border-amber-600 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50"
+                        )}
+                      >
+                        Externa
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Color Identificativo</label>
@@ -139,10 +185,10 @@ const Settings: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">
-                <button onClick={resetForm} className="flex items-center gap-2 px-4 py-2 border border-slate-300 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <button onClick={resetForm} className="flex items-center gap-2 px-4 py-2 border border-slate-300 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
                   <X className="w-4 h-4" /> Cancelar
                 </button>
-                <button onClick={handleSave} disabled={!name.trim()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+                <button onClick={handleSave} disabled={!name.trim()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer">
                   <Check className="w-4 h-4" /> Guardar
                 </button>
               </div>
@@ -154,7 +200,17 @@ const Settings: React.FC = () => {
               <div key={unit.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
                 <div className="flex items-center gap-4">
                   <span className={clsx("w-6 h-6 rounded-full border-2", getColor(unit.color).bg, getColor(unit.color).border)}></span>
-                  <span className="font-medium text-slate-800">{unit.name}</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-semibold text-slate-800 text-sm">{unit.name}</span>
+                    <span className={clsx(
+                      "text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border tracking-wider select-none",
+                      unit.type === 'interna-hjsd' && "bg-slate-100 text-slate-700 border-slate-350",
+                      unit.type === 'externa' && "bg-amber-50 text-amber-700 border-amber-250",
+                      (!unit.type || unit.type === 'interna') && "bg-blue-50 text-blue-700 border-blue-200"
+                    )}>
+                      {unit.type === 'interna-hjsd' ? 'Interna HJSD' : unit.type === 'externa' ? 'Externa' : 'Interna'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 

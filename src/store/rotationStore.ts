@@ -98,7 +98,7 @@ export const useRotationStore = create<RotationState>((set, get) => ({
         // 1. Seed Units
         const { MOCK_UNITS } = await import('./mockData');
         MOCK_UNITS.forEach(u => {
-          batch.set(doc(db, 'units', u.id), { name: u.name, color: u.color });
+          batch.set(doc(db, 'units', u.id), { name: u.name, color: u.color, type: (u as any).type ?? 'interna' });
         });
 
         // 2. Seed Residents
@@ -234,8 +234,7 @@ export const useRotationStore = create<RotationState>((set, get) => ({
             month: tRot.month,
             year: tRot.year,
             unitId: tRot.unitId,
-            isVacation: tRot.isVacation,
-            type: tRot.type ?? 'interna-cot'
+            isVacation: tRot.isVacation
           });
         }
         batch.set(doc(db, 'rotations', sourceRotation.id), {
@@ -243,8 +242,7 @@ export const useRotationStore = create<RotationState>((set, get) => ({
           month: sourceRotation.month,
           year: sourceRotation.year,
           unitId: sourceRotation.unitId,
-          isVacation: sourceRotation.isVacation,
-          type: sourceRotation.type ?? 'interna-cot'
+          isVacation: sourceRotation.isVacation
         });
         batch.commit().catch(err => console.error('Error syncing moved rotation to Firestore:', err));
       }

@@ -81,8 +81,7 @@ const Board: React.FC = () => {
         month: destMonth,
         year: targetYear,
         unitId,
-        isVacation: false,
-        type: 'interna-cot'
+        isVacation: false
       });
       return;
     }
