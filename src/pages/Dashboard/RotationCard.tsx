@@ -39,11 +39,11 @@ const RotationCard: React.FC<RotationCardProps> = ({ rotation, index }) => {
           {...provided.dragHandleProps}
           onDoubleClick={handleDoubleClick}
           className={clsx(
-            `relative w-full h-full min-h-[2.5rem] rounded-md text-[10px] leading-tight font-semibold flex items-center justify-center p-1 text-center transition-shadow shadow-sm select-none`,
-            color.bg, color.text, color.border,
-            unitType === 'interna' && 'border-2 border-solid',
-            unitType === 'interna-hjsd' && 'border-[4px] border-double',
-            unitType === 'externa' && 'border-2 border-dashed',
+            `relative w-full h-full min-h-[2.5rem] rounded-md border text-[10px] leading-tight font-semibold flex items-center justify-center p-1 text-center transition-shadow shadow-sm select-none`,
+            color.bg, color.text,
+            unitType === 'interna' && clsx('border-2 border-solid', color.border),
+            unitType === 'interna-hjsd' && 'border-[4px] border-double border-slate-500',
+            unitType === 'externa' && 'border-2 border-dashed border-amber-600',
             snapshot.isDragging && 'shadow-lg ring-2 ring-blue-400 z-50',
             !isAdmin && 'cursor-default'
           )}
