@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
             }`}
           >
             <BarChart3 className="w-4 h-4 flex-shrink-0" />
-            {showCounters ? 'Ocultar Acumulado' : 'Ver Acumulado Anual'}
+            {showCounters ? 'Ocultar Acumulado' : 'Ver Acumulado'}
           </button>
 
           {isAdmin && (

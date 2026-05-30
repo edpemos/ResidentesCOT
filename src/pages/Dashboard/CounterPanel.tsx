@@ -29,11 +29,9 @@ const CounterPanel: React.FC = () => {
         });
       }
 
-      // Filter rotations for this academic year
+      // Filter rotations for these active residents over their entire residency
       filteredRotations = rotations.filter(rot => {
-        const isTargetYear = rot.month >= 5 ? rot.year === currentYear : rot.year === currentYear + 1;
-        const isFromActiveResident = filteredResidents.some(res => res.id === rot.residentId);
-        return isTargetYear && isFromActiveResident;
+        return filteredResidents.some(res => res.id === rot.residentId);
       });
 
     } else {
@@ -79,13 +77,10 @@ const CounterPanel: React.FC = () => {
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full max-h-[800px]">
       <div className="p-4 border-b border-slate-100 bg-slate-50 rounded-t-xl shrink-0">
         <h3 className="font-semibold text-slate-800">
-          {viewMode === 'academicYear' ? 'Acumulado Curso' : 'Acumulado Residencia'}
+          Acumulado Residencia
         </h3>
         <p className="text-xs text-slate-500">
-          {viewMode === 'academicYear' 
-            ? `Curso Académico ${currentYear}/${currentYear + 1}` 
-            : 'Total de rotaciones realizadas'
-          }
+          Total de rotaciones realizadas en la totalidad de su residencia
         </p>
       </div>
       
