@@ -46,7 +46,7 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
   };
 
   const handleSave = () => {
-    if (!firstName || !lastName || !startDate || !endDate || !email) return;
+    if (!firstName || !startDate || !endDate || !email) return;
 
     if (editingId) {
       updateResident(editingId, { 
@@ -202,7 +202,7 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                 <button onClick={resetForm} className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100">
                   <XCircle className="w-4 h-4" /> Cancelar
                 </button>
-                <button onClick={handleSave} disabled={!firstName || !lastName || !startDate || !endDate || !email} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+                <button onClick={handleSave} disabled={!firstName || !startDate || !endDate || !email} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
                   <Check className="w-4 h-4" /> Guardar
                 </button>
               </div>
