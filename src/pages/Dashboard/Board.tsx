@@ -8,7 +8,7 @@ import { getColor } from '../../utils/constants';
 import { MONTHS } from '../../utils/constants';
 import RotationCard from './RotationCard';
 import clsx from 'clsx';
-import { GripVertical, Calendar, User, Info, EyeOff, Filter } from 'lucide-react';
+import { GripVertical, Calendar, User, Info, EyeOff, Filter, Trash2 } from 'lucide-react';
 import type { Resident } from '../../types';
 
 // Academic month order: June (5) to May (4)
@@ -34,6 +34,13 @@ const Board: React.FC = () => {
   const isAdmin = role === 'admin';
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [isDraggingRotation, setIsDraggingRotation] = useState(false);
+
+  const handleDragStart = (start: any) => {
+    if (start.source.droppableId !== 'unit-bank') {
+      setIsDraggingRotation(true);
+    }
+  };
 
   // StrictMode workaround for @hello-pangea/dnd
   const [enabled, setEnabled] = useState(false);
@@ -51,15 +58,21 @@ const Board: React.FC = () => {
   const academicYears = Array.from({ length: 8 }, (_, i) => 2021 + i);
 
   const handleDragEnd = (result: DropResult) => {
+    setIsDraggingRotation(false);
     if (!isAdmin) return;
     
     const { source, destination, draggableId } = result;
 
-    // Drop outside board -> delete
-    if (!destination) {
+    // Drop in trash zone -> delete
+    if (destination && destination.droppableId === 'delete-zone') {
       if (source.droppableId !== 'unit-bank') {
         deleteRotation(draggableId);
       }
+      return;
+    }
+
+    // Drop outside board -> ignore (no action)
+    if (!destination) {
       return;
     }
 
@@ -273,7 +286,7 @@ const Board: React.FC = () => {
       </div>
 
       <div className="overflow-x-auto flex-1 flex flex-col min-w-0">
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           
           {/* 🗂️ BANK OF ROTATIONS (Admin template bank) */}
           {isAdmin && (
@@ -314,7 +327,7 @@ const Board: React.FC = () => {
                   </div>
                 )}
               </Droppable>
-              <p className="text-xs text-slate-400 mt-2">Arrastra una rotación ya puesta fuera del tablero para eliminarla.</p>
+              <p className="text-xs text-slate-400 mt-2">Arrastra una rotación al contenedor de basura que aparecerá abajo para eliminarla.</p>
             </div>
           )}
 
@@ -450,6 +463,33 @@ const Board: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* 🗑️ FLOATING TRASH CAN DROP ZONE */}
+          {isDraggingRotation && (
+            <Droppable droppableId="delete-zone">
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={clsx(
+                    "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-full border-2 border-dashed shadow-2xl transition-all duration-300 pointer-events-auto",
+                    snapshot.isDraggingOver
+                      ? "bg-red-500 border-red-600 text-white scale-110 shadow-red-500/30 animate-pulse"
+                      : "bg-red-50 border-red-250 text-red-700 hover:bg-red-100"
+                  )}
+                >
+                  <Trash2 className={clsx(
+                    "w-6 h-6 transition-transform duration-300",
+                    snapshot.isDraggingOver ? "scale-125 rotate-12 text-white" : "text-red-500"
+                  )} />
+                  <span className="text-sm font-extrabold tracking-wide uppercase select-none">
+                    {snapshot.isDraggingOver ? "¡Suelta para eliminar!" : "Arrastra aquí para eliminar"}
+                  </span>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          )}
         </DragDropContext>
       </div>
     </div>
