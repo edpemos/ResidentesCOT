@@ -161,14 +161,11 @@ const Board: React.FC = () => {
       
       {/* 💳 HEADER CON BOTÓN DE FILTRO */}
       <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h3 className="font-bold text-slate-800 tracking-wide text-base">Planificación de Rotaciones</h3>
-          <span className="bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border border-blue-150 tracking-wider">
-            {viewMode === 'academicYear' 
-              ? `Curso ${currentYear}/${currentYear + 1}` 
-              : `Residente: ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
-          </span>
-        </div>
+        <h3 className="font-bold text-slate-800 tracking-wide text-base uppercase">
+          {viewMode === 'academicYear' 
+            ? `Pizarra de Rotaciones ${currentYear}/${currentYear + 1}` 
+            : `Pizarra de Rotaciones — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
+        </h3>
         
         <button
           onClick={() => setFiltersExpanded(!filtersExpanded)}

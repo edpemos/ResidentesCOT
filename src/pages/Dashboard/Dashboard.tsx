@@ -9,11 +9,12 @@ import { Settings2, AlertTriangle, BarChart3 } from 'lucide-react';
 const Dashboard: React.FC = () => {
   const { role } = useAuthStore();
   const isAdmin = role === 'admin';
-  const { residents } = useRotationStore();
+  const { residents, currentYear, viewMode, selectedResidentId } = useRotationStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [showCounters, setShowCounters] = useState(false);
 
   const graduados = residents.filter(r => r.year === 'Graduado');
+  const selectedResident = residents.find(r => r.id === selectedResidentId);
 
   return (
     <div className="h-full flex flex-col">
@@ -32,7 +33,11 @@ const Dashboard: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Pizarra de Rotaciones</h2>
+          <h2 className="text-2xl font-bold text-slate-800 uppercase">
+            {viewMode === 'academicYear' 
+              ? `Pizarra de Rotaciones ${currentYear}/${currentYear + 1}` 
+              : `Pizarra de Rotaciones — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
+          </h2>
           <p className="text-slate-500 text-sm mt-1">
             Gestión visual del plan formativo anual
           </p>
