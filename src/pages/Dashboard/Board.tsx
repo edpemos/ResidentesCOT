@@ -8,7 +8,7 @@ import { getColor } from '../../utils/constants';
 import { MONTHS } from '../../utils/constants';
 import RotationCard from './RotationCard';
 import clsx from 'clsx';
-import { GripVertical, Calendar, User, Info } from 'lucide-react';
+import { GripVertical, Calendar, User, Info, EyeOff, Filter } from 'lucide-react';
 import type { Resident } from '../../types';
 
 // Academic month order: June (5) to May (4)
@@ -32,6 +32,8 @@ const Board: React.FC = () => {
   const { units } = useUnitStore();
   const { role } = useAuthStore();
   const isAdmin = role === 'admin';
+
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // StrictMode workaround for @hello-pangea/dnd
   const [enabled, setEnabled] = useState(false);
@@ -157,8 +159,40 @@ const Board: React.FC = () => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
       
+      {/* 💳 HEADER CON BOTÓN DE FILTRO */}
+      <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-wrap gap-4 items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h3 className="font-bold text-slate-800 tracking-wide text-base">Planificación de Rotaciones</h3>
+          <span className="bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border border-blue-150 tracking-wider">
+            {viewMode === 'academicYear' 
+              ? `Curso ${currentYear}/${currentYear + 1}` 
+              : `Residente: ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
+          </span>
+        </div>
+        
+        <button
+          onClick={() => setFiltersExpanded(!filtersExpanded)}
+          className={clsx(
+            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm select-none",
+            filtersExpanded 
+              ? "bg-blue-600 border-blue-600 text-white shadow-blue-500/10 shadow-md" 
+              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-850"
+          )}
+        >
+          {filtersExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Filter className="w-3.5 h-3.5" />}
+          <span>{filtersExpanded ? "Ocultar Opciones" : "Mostrar Opciones"}</span>
+        </button>
+      </div>
+
       {/* 🛠️ FILTER CONTROL BAR PANEL */}
-      <div className="p-5 border-b border-slate-100 bg-slate-50/50 space-y-4">
+      <div 
+        className={clsx(
+          "transition-all duration-300 ease-in-out overflow-hidden bg-slate-50/50 space-y-4",
+          filtersExpanded 
+            ? "max-h-[500px] opacity-100 p-5 border-b border-slate-100" 
+            : "max-h-0 opacity-0 p-0 border-b-0 pointer-events-none"
+        )}
+      >
         
         {/* Toggle Mode Buttons */}
         <div className="flex flex-wrap gap-2 items-center justify-between">
