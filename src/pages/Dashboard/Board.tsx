@@ -55,8 +55,8 @@ const Board: React.FC = () => {
 
   if (!enabled) return null;
 
-  // Available academic years (starting in 2021 up to 2028)
-  const academicYears = Array.from({ length: 8 }, (_, i) => 2021 + i);
+  // Available academic years (from 2026/2027 to 2030/2031)
+  const academicYears = Array.from({ length: 5 }, (_, i) => 2026 + i);
 
   const handleDragEnd = (result: DropResult) => {
     setIsDraggingRotation(false);
@@ -363,16 +363,16 @@ const Board: React.FC = () => {
           )}
 
           {/* 📅 THE BLACKBOARD TABLE GRID */}
-          <div className="min-w-[960px] p-5 flex-1 relative">
+          <div className="w-full px-2 py-3 flex-1 relative min-w-0">
             
             {/* Calendar Month Headers (June to May) */}
-            <div className="flex mb-3 sticky top-0 bg-white/95 backdrop-blur-md z-20 py-3 border-b border-slate-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.03)] -mx-5 px-5">
-              <div className="w-56 shrink-0 sticky left-0 bg-white/95 backdrop-blur-xs z-30 flex items-center -ml-5 pl-5">
-                <span className="text-xs font-bold text-slate-450 uppercase tracking-widest pl-1">
+            <div className="flex mb-2 sticky top-0 bg-white/95 backdrop-blur-md z-20 py-2 border-b border-slate-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.03)] -mx-2 px-2">
+              <div className="w-40 shrink-0 sticky left-0 bg-white/95 backdrop-blur-xs z-30 flex items-center -ml-2 pl-2">
+                <span className="text-[10px] font-bold text-slate-450 uppercase tracking-widest pl-1">
                   Residente
                 </span>
               </div>
-              <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
+              <div className="flex-1 grid grid-cols-12 gap-1 pl-2">
                 {ACADEMIC_MONTH_INDICES.map((m) => (
                   <div key={m} className="text-center text-xs font-extrabold text-slate-550 uppercase tracking-widest font-heading">
                     {MONTHS[m]}
@@ -390,11 +390,11 @@ const Board: React.FC = () => {
                   const assignedPercentage = Math.min(100, Math.round((totalRotations / 12) * 100));
                   
                   return (
-                    <div key={resident.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 dark:hover:bg-slate-800/15 rounded-lg transition-colors">
-                      <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-5 pl-5 select-none">
-                        <div className="flex items-center gap-2">
+                    <div key={resident.id} className="flex items-center group py-1 hover:bg-slate-50/30 dark:hover:bg-slate-800/15 rounded-lg transition-colors">
+                      <div className="w-40 shrink-0 pr-2 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-2 pl-2 select-none">
+                        <div className="flex items-center gap-1.5">
                           <span className={clsx(
-                            "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase", 
+                            "text-[8px] font-extrabold px-1 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase", 
                             resident.id.startsWith('temp-')
                               ? 'bg-slate-100 text-slate-450 border border-slate-200 border-dashed dark:bg-slate-950 dark:text-slate-500 dark:border-slate-800/60'
                               : resident.year === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/35 dark:text-teal-400 dark:border-teal-900/35'
@@ -415,8 +415,8 @@ const Board: React.FC = () => {
                         
                         {/* Progress Bar (ex. "9/12 meses") */}
                         {!resident.id.startsWith('temp-') && (
-                          <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
+                          <div className="mt-1 pr-1 w-full flex items-center gap-1">
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-0.5 rounded-full overflow-hidden">
                               <div 
                                 className={clsx(
                                   "h-full rounded-full transition-all duration-500",
@@ -425,14 +425,14 @@ const Board: React.FC = () => {
                                 style={{ width: `${assignedPercentage}%` }}
                               />
                             </div>
-                            <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-8 flex-shrink-0 text-right">
+                            <span className="text-[7px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-6 flex-shrink-0 text-right">
                               {totalRotations}/12m
                             </span>
                           </div>
                         )}
                       </div>
 
-                      <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
+                      <div className="flex-1 grid grid-cols-12 gap-1 pl-2">
                         {ACADEMIC_MONTH_INDICES.map((monthIndex) => {
                           const calendarYear = monthIndex >= 5 ? currentYear : currentYear + 1;
                           const cellId = `${resident.id}-${monthIndex}-${calendarYear}`;
@@ -486,10 +486,10 @@ const Board: React.FC = () => {
 
                     return (
                       <div key={row.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 dark:hover:bg-slate-800/15 rounded-lg transition-colors">
-                        <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-5 pl-5 select-none">
-                          <div className="flex items-center gap-2">
+                        <div className="w-40 shrink-0 pr-2 flex flex-col justify-center sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800/80 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] -ml-2 pl-2 select-none">
+                          <div className="flex items-center gap-1">
                             <span className={clsx(
-                              "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase",
+                              "text-[8px] font-extrabold px-1 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase",
                               row.level === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/35 dark:text-teal-400 dark:border-teal-900/35'
                               : row.level === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/35 dark:text-sky-400 dark:border-sky-900/35'
                               : row.level === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/35 dark:text-indigo-400 dark:border-indigo-900/35'
@@ -504,8 +504,8 @@ const Board: React.FC = () => {
                           </div>
 
                           {/* Progress Bar (ex. "9/12 meses") */}
-                          <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
+                          <div className="mt-1 pr-1 w-full flex items-center gap-1">
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-0.5 rounded-full overflow-hidden">
                               <div 
                                 className={clsx(
                                   "h-full rounded-full transition-all duration-500",
@@ -514,13 +514,13 @@ const Board: React.FC = () => {
                                 style={{ width: `${assignedPercentage}%` }}
                               />
                             </div>
-                            <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-8 flex-shrink-0 text-right">
+                            <span className="text-[7px] font-extrabold text-slate-400 dark:text-slate-500 tracking-tighter w-6 flex-shrink-0 text-right">
                               {totalRotations}/12m
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
+                        <div className="flex-1 grid grid-cols-12 gap-1 pl-2">
                           {ACADEMIC_MONTH_INDICES.map((monthIndex) => {
                             const calendarYear = monthIndex >= 5 ? row.year : row.year + 1;
                             const cellId = `${selectedResident.id}-${monthIndex}-${calendarYear}`;
