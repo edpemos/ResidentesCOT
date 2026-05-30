@@ -464,32 +464,33 @@ const Board: React.FC = () => {
             </div>
           </div>
 
-          {/* 🗑️ FLOATING TRASH CAN DROP ZONE */}
-          {isDraggingRotation && (
-            <Droppable droppableId="delete-zone">
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={clsx(
-                    "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-full border-2 border-dashed shadow-2xl transition-all duration-300 pointer-events-auto",
-                    snapshot.isDraggingOver
-                      ? "bg-red-500 border-red-600 text-white scale-110 shadow-red-500/30 animate-pulse"
-                      : "bg-red-50 border-red-250 text-red-700 hover:bg-red-100"
-                  )}
-                >
-                  <Trash2 className={clsx(
-                    "w-6 h-6 transition-transform duration-300",
-                    snapshot.isDraggingOver ? "scale-125 rotate-12 text-white" : "text-red-500"
-                  )} />
-                  <span className="text-sm font-extrabold tracking-wide uppercase select-none">
-                    {snapshot.isDraggingOver ? "¡Suelta para eliminar!" : "Arrastra aquí para eliminar"}
-                  </span>
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          )}
+          {/* 🗑️ FLOATING TRASH CAN DROP ZONE (Always mounted to prevent DnD state-machine crashes, positioned offscreen when inactive) */}
+          <Droppable droppableId="delete-zone">
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={clsx(
+                  "fixed z-50 flex items-center gap-3 px-6 py-4 rounded-full border-2 border-dashed shadow-2xl transition-all duration-300 pointer-events-auto",
+                  isDraggingRotation
+                    ? "bottom-6 left-6 lg:left-24 opacity-100 scale-100"
+                    : "bottom-[-100px] left-6 lg:left-24 opacity-0 scale-75 pointer-events-none",
+                  snapshot.isDraggingOver
+                    ? "bg-red-500 border-red-650 text-white scale-110 shadow-red-500/30 animate-pulse"
+                    : "bg-red-50 border-red-250 text-red-700 hover:bg-red-100"
+                )}
+              >
+                <Trash2 className={clsx(
+                  "w-6 h-6 transition-transform duration-300",
+                  snapshot.isDraggingOver ? "scale-125 rotate-12 text-white" : "text-red-500"
+                )} />
+                <span className="text-sm font-extrabold tracking-wide uppercase select-none">
+                  {snapshot.isDraggingOver ? "¡Suelta para eliminar!" : "Arrastra aquí para eliminar"}
+                </span>
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </DragDropContext>
       </div>
     </div>
