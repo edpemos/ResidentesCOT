@@ -170,7 +170,8 @@ const Board: React.FC = () => {
   const selectedResident = residents.find(r => r.id === selectedResidentId);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative">
       
       {/* 💳 HEADER CON BOTÓN DE FILTRO */}
       <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-wrap gap-4 items-center justify-between">
@@ -286,7 +287,6 @@ const Board: React.FC = () => {
       </div>
 
       <div className="overflow-x-auto flex-1 flex flex-col min-w-0">
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           
           {/* 🗂️ BANK OF ROTATIONS (Admin template bank) */}
           {isAdmin && (
@@ -463,37 +463,37 @@ const Board: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
 
-          {/* 🗑️ FLOATING TRASH CAN DROP ZONE (Always mounted to prevent DnD state-machine crashes, positioned offscreen when inactive) */}
-          <Droppable droppableId="delete-zone">
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className={clsx(
-                  "fixed z-50 flex items-center gap-3 px-6 py-4 rounded-full border-2 border-dashed shadow-2xl transition-all duration-300 pointer-events-auto",
-                  isDraggingRotation
-                    ? "bottom-6 left-6 lg:left-24 opacity-100 scale-100"
-                    : "bottom-[-100px] left-6 lg:left-24 opacity-0 scale-75 pointer-events-none",
-                  snapshot.isDraggingOver
-                    ? "bg-red-500 border-red-650 text-white scale-110 shadow-red-500/30 animate-pulse"
-                    : "bg-red-50 border-red-250 text-red-700 hover:bg-red-100"
-                )}
-              >
-                <Trash2 className={clsx(
-                  "w-6 h-6 transition-transform duration-300",
-                  snapshot.isDraggingOver ? "scale-125 rotate-12 text-white" : "text-red-500"
-                )} />
-                <span className="text-sm font-extrabold tracking-wide uppercase select-none">
-                  {snapshot.isDraggingOver ? "¡Suelta para eliminar!" : "Arrastra aquí para eliminar"}
-                </span>
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        {/* 🗑️ FLOATING TRASH CAN DROP ZONE (Always mounted to prevent DnD state-machine crashes, positioned offscreen when inactive) */}
+        <Droppable droppableId="delete-zone">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={clsx(
+                "fixed z-50 flex items-center gap-3 px-6 py-4 rounded-full border-2 border-dashed shadow-2xl transition-all duration-300 pointer-events-auto",
+                isDraggingRotation
+                  ? "bottom-6 left-6 lg:left-24 opacity-100 scale-100"
+                  : "bottom-[-100px] left-6 lg:left-24 opacity-0 scale-75 pointer-events-none",
+                snapshot.isDraggingOver
+                  ? "bg-red-500 border-red-650 text-white scale-110 shadow-red-500/30 animate-pulse"
+                  : "bg-red-50 border-red-250 text-red-700 hover:bg-red-100"
+              )}
+            >
+              <Trash2 className={clsx(
+                "w-6 h-6 transition-transform duration-300",
+                snapshot.isDraggingOver ? "scale-125 rotate-12 text-white" : "text-red-500"
+              )} />
+              <span className="text-sm font-extrabold tracking-wide uppercase select-none">
+                {snapshot.isDraggingOver ? "¡Suelta para eliminar!" : "Arrastra aquí para eliminar"}
+              </span>
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </div>
-    </div>
+    </DragDropContext>
   );
 };
 
