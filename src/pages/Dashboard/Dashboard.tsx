@@ -4,13 +4,14 @@ import CounterPanel from './CounterPanel';
 import ResidentConfigModal from './ResidentConfigModal';
 import { useAuthStore } from '../../store/authStore';
 import { useRotationStore } from '../../store/rotationStore';
-import { Settings2, AlertTriangle } from 'lucide-react';
+import { Settings2, AlertTriangle, BarChart3 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { role } = useAuthStore();
   const isAdmin = role === 'admin';
   const { residents } = useRotationStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [showCounters, setShowCounters] = useState(false);
 
   const graduados = residents.filter(r => r.year === 'Graduado');
 
@@ -29,7 +30,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Pizarra de Rotaciones</h2>
           <p className="text-slate-500 text-sm mt-1">
@@ -37,15 +38,29 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         
-        {isAdmin && (
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => setIsConfigOpen(true)}
-            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-sm font-medium"
+            onClick={() => setShowCounters(!showCounters)}
+            className={`flex items-center gap-2 border px-4 py-2 rounded-lg transition-all duration-200 shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer ${
+              showCounters 
+                ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100" 
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
           >
-            <Settings2 className="w-4 h-4" />
-            Configurar Residentes
+            <BarChart3 className="w-4 h-4 flex-shrink-0" />
+            {showCounters ? 'Ocultar Acumulado' : 'Ver Acumulado Anual'}
           </button>
-        )}
+
+          {isAdmin && (
+            <button 
+              onClick={() => setIsConfigOpen(true)}
+              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-sm font-medium whitespace-nowrap cursor-pointer"
+            >
+              <Settings2 className="w-4 h-4 flex-shrink-0" />
+              Configurar Residentes
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
@@ -55,9 +70,11 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Panel Lateral de Contadores */}
-        <div className="w-full lg:w-64 shrink-0 overflow-auto">
-          <CounterPanel />
-        </div>
+        {showCounters && (
+          <div className="w-full lg:w-64 shrink-0 overflow-auto border-l border-slate-200 pl-4 transition-all duration-300">
+            <CounterPanel />
+          </div>
+        )}
       </div>
 
       <ResidentConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />

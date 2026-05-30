@@ -5,12 +5,23 @@ import Navbar from './Navbar';
 
 const MainLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        toggleSidebar={toggleSidebar} 
+        collapsed={sidebarCollapsed} 
+      />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar toggleSidebar={toggleSidebar} />
