@@ -34,7 +34,7 @@ export const calculateResidentYearForAcademicYear = (startDate: string, academic
 
 const getCurrentAcademicYearStart = (): number => {
   const now = new Date();
-  return now.getMonth() < 5 ? now.getFullYear() - 1 : now.getFullYear();
+  return now.getMonth() < 4 ? now.getFullYear() - 1 : now.getFullYear();
 };
 
 interface RotationState {
