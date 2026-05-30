@@ -5,10 +5,17 @@
   --color-primary-light: #60a5fa;
   --color-bg-base: #f8fafc; /* Gris pizarra muy claro */
   --color-card: #ffffff;
+  
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
 }
 
 body {
   background-color: var(--color-bg-base);
   color: #334155;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }

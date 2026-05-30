@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { useAuthStore } from '../../store/authStore';
 import { useRotationStore } from '../../store/rotationStore';
 import { getColor } from '../../utils/constants';
-import { Plane } from 'lucide-react';
+import { Palmtree } from 'lucide-react';
 
 interface RotationCardProps {
   rotation: Rotation;
@@ -39,12 +39,14 @@ const RotationCard: React.FC<RotationCardProps> = ({ rotation, index }) => {
           {...provided.dragHandleProps}
           onDoubleClick={handleDoubleClick}
           className={clsx(
-            `relative w-full h-full min-h-[2.5rem] rounded-md border text-[10px] leading-tight font-semibold flex items-center justify-center p-1 text-center transition-shadow shadow-sm select-none`,
+            `relative w-full h-full min-h-[2.5rem] rounded-md border text-[10px] leading-tight font-extrabold flex items-center justify-center p-1 text-center select-none transition-all duration-200`,
             color.bg, color.text,
             unitType === 'interna' && clsx('border-2 border-solid', color.border),
-            unitType === 'interna-hjsd' && 'border-[4px] border-double border-slate-500',
-            unitType === 'externa' && 'border-2 border-dashed border-amber-600',
-            snapshot.isDragging && 'shadow-lg ring-2 ring-blue-400 z-50',
+            unitType === 'interna-hjsd' && clsx('border-[4px] border-double', color.border),
+            unitType === 'externa' && clsx('border-2 border-dashed', color.border),
+            snapshot.isDragging 
+              ? 'shadow-2xl scale-[1.04] rotate-[2deg] z-50 ring-2 ring-blue-500/50 cursor-grabbing' 
+              : 'hover:-translate-y-0.5 hover:shadow-md cursor-grab',
             !isAdmin && 'cursor-default'
           )}
           style={{
@@ -52,15 +54,15 @@ const RotationCard: React.FC<RotationCardProps> = ({ rotation, index }) => {
           }}
         >
           {rotation.isVacation && (
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSJ0cmFuc3BhcmVudCI+PC9yZWN0Pgo8cGF0aCBkPSJNMCAwbDggOHptOCAwTDAgOHoiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIj48L3BhdGg+Cjwvc3ZnPg==')] opacity-50 rounded-md pointer-events-none" />
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSJ0cmFuc3BhcmVudCI+PC9yZWN0Pgo8cGF0aCBkPSJNMCAwbDggOHptOCAwTDAgOHoiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIj48L3BhdGg+Cjwvc3ZnPg==')] opacity-50 rounded-md pointer-events-none animate-pulse" />
           )}
           
-          <span className="relative z-10 break-words line-clamp-2 w-full">
+          <span className="relative z-10 break-words line-clamp-2 w-full px-1">
             {name}
           </span>
           
           {rotation.isVacation && (
-            <Plane className="absolute bottom-0.5 right-0.5 w-3 h-3 text-slate-500 opacity-70" />
+            <Palmtree className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 text-slate-700/80 opacity-90 animate-[bounce_1.5s_infinite_ease-in-out] hover:scale-110 transition-transform duration-300" />
           )}
         </div>
       )}

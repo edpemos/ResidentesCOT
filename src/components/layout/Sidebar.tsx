@@ -36,14 +36,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       {/* Sidebar */}
       <aside 
         className={clsx(
-          "fixed lg:static inset-y-0 left-0 z-30 bg-slate-900 text-slate-300 transform transition-all duration-300 ease-in-out flex flex-col overflow-hidden group shadow-xl",
+          "fixed lg:static inset-y-0 left-0 z-30 bg-slate-900/95 backdrop-blur-md text-slate-300 transform transition-all duration-300 ease-in-out flex flex-col overflow-hidden group shadow-xl border-r border-slate-800/40",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           "w-64 lg:w-16 lg:hover:w-64"
         )}
       >
-        <div className="h-16 flex items-center justify-between px-4 bg-slate-950 border-b border-slate-800 overflow-hidden shrink-0">
+        <div className="h-16 flex items-center justify-between px-4 bg-slate-950/60 border-b border-slate-800/40 overflow-hidden shrink-0">
           <div className="flex items-center text-white min-w-0">
-            <div className="bg-blue-500 p-1.5 rounded-lg flex-shrink-0">
+            <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-lg flex-shrink-0 shadow-md shadow-blue-500/10">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-lg tracking-wide whitespace-nowrap transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-32 overflow-hidden ml-2 lg:ml-0 lg:group-hover:ml-2">
@@ -65,10 +65,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               }}
               className={({ isActive }) =>
                 clsx(
-                  "flex items-center rounded-lg text-sm font-medium transition-all duration-300 px-3 py-2.5 gap-3 whitespace-nowrap",
+                  "flex items-center rounded-lg text-sm font-semibold transition-all duration-300 px-3 py-2.5 gap-3 whitespace-nowrap",
                   isActive 
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-900/20" 
-                    : "hover:bg-slate-800 hover:text-white"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/15 ring-1 ring-blue-400/30" 
+                    : "hover:bg-slate-800/50 hover:text-white hover:translate-x-0.5"
                 )
               }
             >
@@ -81,17 +81,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </nav>
 
         {/* User Info & Logout Section */}
-        <div className="p-3 border-t border-slate-800 shrink-0 bg-slate-950/40">
+        <div className="p-3 border-t border-slate-800/40 shrink-0 bg-slate-950/20">
           <div className="flex flex-col gap-2">
             
             {/* User Profile Info */}
-            <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg bg-slate-800/30 border border-slate-800/40 overflow-hidden min-h-[48px]">
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
-                <User className="w-4 h-4 text-slate-300" />
+            <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg bg-slate-850/40 border border-slate-800/30 overflow-hidden min-h-[48px] shadow-inner">
+              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700/50 shadow-sm">
+                <User className="w-4 h-4 text-slate-350" />
               </div>
               
               <div className="transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-40 overflow-hidden flex flex-col">
-                <span className="text-[11px] font-medium text-slate-350 truncate" title={user?.email || ''}>
+                <span className="text-[11px] font-semibold text-slate-200 truncate" title={user?.email || ''}>
                   {user?.email}
                 </span>
                 <span className="text-[9px] font-extrabold uppercase text-blue-400 tracking-wider">
@@ -103,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             {/* Logout Button */}
             <button
               onClick={() => logout()}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-red-950/40 hover:text-red-400 text-slate-400 group/logout cursor-pointer select-none"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-red-950/30 hover:text-red-400 text-slate-400 group/logout cursor-pointer select-none border border-transparent hover:border-red-900/20"
             >
               <LogOut className="w-5 h-5 flex-shrink-0 transition-colors group-hover/logout:text-red-400" />
               <span className="transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-40 overflow-hidden whitespace-nowrap">
@@ -114,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           </div>
         </div>
 
-        <div className="p-3 border-t border-slate-800 text-[10px] text-slate-500 text-center transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-56 overflow-hidden whitespace-nowrap shrink-0">
+        <div className="p-3 border-t border-slate-800/30 text-[10px] text-slate-500 text-center transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 w-auto lg:w-0 lg:group-hover:w-56 overflow-hidden whitespace-nowrap shrink-0">
           &copy; {new Date().getFullYear()} COT Internal App
         </div>
       </aside>

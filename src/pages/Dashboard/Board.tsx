@@ -169,26 +169,25 @@ const Board: React.FC = () => {
     : getSingleResidentRows();
 
   const selectedResident = residents.find(r => r.id === selectedResidentId);
-
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative h-full">
       
       {/* 💳 HEADER CON BOTÓN DE FILTRO */}
-      <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-wrap gap-4 items-center justify-between">
-        <h3 className="font-bold text-slate-800 tracking-wide text-base uppercase">
+      <div className="px-5 py-4 border-b border-slate-150 bg-gradient-to-r from-slate-50/50 to-white flex flex-wrap gap-4 items-center justify-between">
+        <h3 className="font-extrabold text-slate-800 tracking-wide text-base uppercase font-heading">
           {viewMode === 'academicYear' 
-            ? `Pizarra de Rotaciones ${currentYear}/${currentYear + 1}` 
-            : `Pizarra de Rotaciones — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
+            ? `PIZARRA DE ROTACIONES ${currentYear}/${currentYear + 1}` 
+            : `PIZARRA DE ROTACIONES — ${selectedResident ? `${selectedResident.firstName} ${selectedResident.lastName || ''}` : ''}`}
         </h3>
         
         <button
           onClick={() => setFiltersExpanded(!filtersExpanded)}
           className={clsx(
-            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm select-none",
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-sm select-none",
             filtersExpanded 
-              ? "bg-blue-600 border-blue-600 text-white shadow-blue-500/10 shadow-md" 
-              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-850"
+              ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/15" 
+              : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-850"
           )}
         >
           {filtersExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Filter className="w-3.5 h-3.5" />}
@@ -287,11 +286,11 @@ const Board: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1 flex flex-col min-w-0">
+      <div className="overflow-auto flex-1 flex flex-col min-w-0">
           
           {/* 🗂️ BANK OF ROTATIONS (Admin template bank) */}
           {isAdmin && (
-            <div className="p-4 bg-slate-50 border-b border-slate-200 min-w-[960px]">
+            <div className="p-4 bg-slate-50/50 border-b border-slate-200/60 min-w-[960px] shadow-xs">
               
               {/* Sleek Clickable Accordion Header */}
               <div 
@@ -299,10 +298,10 @@ const Board: React.FC = () => {
                 className="flex items-center justify-between cursor-pointer select-none group/bank pb-1"
               >
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-slate-550 uppercase tracking-wider group-hover/bank:text-slate-700 transition-colors">
+                  <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider group-hover/bank:text-slate-700 transition-colors font-heading">
                     Banco de Especialidades (Arrastra las tarjetas a la pizarra para colocarlas)
                   </h4>
-                  <span className="text-[10px] text-slate-400 font-medium opacity-0 group-hover/bank:opacity-100 transition-opacity">
+                  <span className="text-[10px] text-slate-400 font-semibold opacity-0 group-hover/bank:opacity-100 transition-opacity">
                     ({bankExpanded ? "haz clic para contraer" : "haz clic para desplegar"})
                   </span>
                 </div>
@@ -340,7 +339,9 @@ const Board: React.FC = () => {
                                 getColor(unit.color).bg,
                                 getColor(unit.color).text,
                                 getColor(unit.color).border,
-                                snapshot.isDragging ? "shadow-lg scale-105 z-50 ring-2 ring-blue-400" : "hover:-translate-y-0.5"
+                                snapshot.isDragging 
+                                  ? "shadow-2xl scale-[1.04] rotate-[2deg] z-50 ring-2 ring-blue-500/50" 
+                                  : "hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
                               )}
                               style={provided.draggableProps.style}
                             >
@@ -361,14 +362,18 @@ const Board: React.FC = () => {
           )}
 
           {/* 📅 THE BLACKBOARD TABLE GRID */}
-          <div className="min-w-[960px] p-5 flex-1">
+          <div className="min-w-[960px] p-5 flex-1 relative">
             
             {/* Calendar Month Headers (June to May) */}
-            <div className="flex mb-3">
-              <div className="w-56 shrink-0"></div>
-              <div className="flex-1 grid grid-cols-12 gap-2">
+            <div className="flex mb-3 sticky top-0 bg-white/95 backdrop-blur-md z-20 py-3 border-b border-slate-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.03)] -mx-5 px-5">
+              <div className="w-56 shrink-0 sticky left-0 bg-white/95 backdrop-blur-xs z-30 flex items-center -ml-5 pl-5">
+                <span className="text-xs font-bold text-slate-450 uppercase tracking-widest pl-1">
+                  Residente
+                </span>
+              </div>
+              <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
                 {ACADEMIC_MONTH_INDICES.map((m) => (
-                  <div key={m} className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  <div key={m} className="text-center text-xs font-extrabold text-slate-550 uppercase tracking-widest font-heading">
                     {MONTHS[m]}
                   </div>
                 ))}
@@ -376,85 +381,62 @@ const Board: React.FC = () => {
             </div>
 
             {/* Resident rows */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {viewMode === 'academicYear' ? (
                 // View Mode: Academic Year
-                (activeRows as Resident[]).map((resident) => (
-                  <div key={resident.id} className="flex items-center group">
-                    <div className="w-56 shrink-0 pr-4 flex items-center gap-2">
-                      <span className={clsx(
-                        "text-[10px] font-bold px-2 py-0.5 rounded tracking-wide", 
-                        resident.id.startsWith('temp-')
-                          ? 'bg-slate-100 text-slate-500 border border-slate-200 border-dashed'
-                          : 'bg-blue-100 text-blue-800'
-                      )}>
-                        {resident.year}
-                      </span>
-                      <span className={clsx(
-                        "text-sm font-semibold truncate",
-                        resident.id.startsWith('temp-') ? 'text-slate-400 italic' : 'text-slate-700'
-                      )} title={`${resident.firstName} ${resident.lastName}`}>
-                        {resident.firstName} {resident.lastName}
-                      </span>
-                    </div>
-
-                    <div className="flex-1 grid grid-cols-12 gap-2">
-                      {ACADEMIC_MONTH_INDICES.map((monthIndex) => {
-                        const calendarYear = monthIndex >= 5 ? currentYear : currentYear + 1;
-                        const cellId = `${resident.id}-${monthIndex}-${calendarYear}`;
-                        const rotation = rotations.find(
-                          r => r.residentId === resident.id && r.month === monthIndex && r.year === calendarYear
-                        );
-
-                        return (
-                          <Droppable key={cellId} droppableId={cellId} isDropDisabled={!isAdmin}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
+                (activeRows as Resident[]).map((resident) => {
+                  const totalRotations = rotations.filter(r => r.residentId === resident.id).length;
+                  const assignedPercentage = Math.min(100, Math.round((totalRotations / 12) * 100));
+                  
+                  return (
+                    <div key={resident.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 rounded-lg transition-colors">
+                      <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] -ml-5 pl-5 select-none">
+                        <div className="flex items-center gap-2">
+                          <span className={clsx(
+                            "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase", 
+                            resident.id.startsWith('temp-')
+                              ? 'bg-slate-100 text-slate-450 border border-slate-200 border-dashed'
+                              : resident.year === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                              : resident.year === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200'
+                              : resident.year === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : resident.year === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          )}>
+                            {resident.year}
+                          </span>
+                          <span className={clsx(
+                            "text-xs font-bold truncate tracking-wide",
+                            resident.id.startsWith('temp-') ? 'text-slate-400 italic font-medium' : 'text-slate-700'
+                          )} title={`${resident.firstName} ${resident.lastName}`}>
+                            {resident.firstName} {resident.lastName}
+                          </span>
+                        </div>
+                        
+                        {/* Progress Bar (ex. "9/12 meses") */}
+                        {!resident.id.startsWith('temp-') && (
+                          <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
+                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                              <div 
                                 className={clsx(
-                                  "h-11 rounded-lg border-2 border-dashed transition-all duration-200 relative flex items-center justify-center p-0.5",
-                                  snapshot.isDraggingOver 
-                                    ? "bg-blue-50 border-blue-450 scale-[1.02]" 
-                                    : "border-slate-200 bg-slate-50/50 hover:border-slate-350"
+                                  "h-full rounded-full transition-all duration-500",
+                                  assignedPercentage === 100 ? "bg-emerald-500" : "bg-blue-500"
                                 )}
-                              >
-                                {rotation ? (
-                                  <RotationCard rotation={rotation} index={0} />
-                                ) : (
-                                  <span className="text-[10px] text-slate-300 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-                                    Libre
-                                  </span>
-                                )}
-                                {provided.placeholder}
-                              </div>
-                            )}
-                          </Droppable>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                // View Mode: Selected Resident Entire Residency (5 levels)
-                selectedResident ? (
-                  (activeRows as { id: string; label: string; year: number; level: string; }[]).map((row) => (
-                    <div key={row.id} className="flex items-center group">
-                      <div className="w-56 shrink-0 pr-4 flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded tracking-wide bg-blue-600 text-white shadow-sm">
-                          {row.level}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-700 truncate" title={row.label}>
-                          {row.label}
-                        </span>
+                                style={{ width: `${assignedPercentage}%` }}
+                              />
+                            </div>
+                            <span className="text-[8px] font-extrabold text-slate-400 tracking-tighter w-8 flex-shrink-0 text-right">
+                              {totalRotations}/12m
+                            </span>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex-1 grid grid-cols-12 gap-2">
+                      <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
                         {ACADEMIC_MONTH_INDICES.map((monthIndex) => {
-                          const calendarYear = monthIndex >= 5 ? row.year : row.year + 1;
-                          const cellId = `${selectedResident.id}-${monthIndex}-${calendarYear}`;
+                          const calendarYear = monthIndex >= 5 ? currentYear : currentYear + 1;
+                          const cellId = `${resident.id}-${monthIndex}-${calendarYear}`;
                           const rotation = rotations.find(
-                            r => r.residentId === selectedResident.id && r.month === monthIndex && r.year === calendarYear
+                            r => r.residentId === resident.id && r.month === monthIndex && r.year === calendarYear
                           );
 
                           return (
@@ -466,14 +448,14 @@ const Board: React.FC = () => {
                                   className={clsx(
                                     "h-11 rounded-lg border-2 border-dashed transition-all duration-200 relative flex items-center justify-center p-0.5",
                                     snapshot.isDraggingOver 
-                                      ? "bg-blue-50 border-blue-450 scale-[1.02]" 
-                                      : "border-slate-200 bg-slate-50/50 hover:border-slate-350"
+                                      ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
+                                      : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
                                   )}
                                 >
                                   {rotation ? (
                                     <RotationCard rotation={rotation} index={0} />
                                   ) : (
-                                    <span className="text-[10px] text-slate-300 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                                    <span className="text-[9px] text-slate-300 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity font-bold tracking-wider uppercase select-none italic">
                                       Libre
                                     </span>
                                   )}
@@ -485,7 +467,91 @@ const Board: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  ))
+                  );
+                })
+              ) : (
+                // View Mode: Selected Resident Entire Residency (5 levels)
+                selectedResident ? (
+                  (activeRows as { id: string; label: string; year: number; level: string; }[]).map((row) => {
+                    const totalRotations = rotations.filter(
+                      r => r.residentId === selectedResident.id && r.year === row.year
+                    ).length;
+                    const assignedPercentage = Math.min(100, Math.round((totalRotations / 12) * 100));
+
+                    return (
+                      <div key={row.id} className="flex items-center group py-1.5 hover:bg-slate-50/30 rounded-lg transition-colors">
+                        <div className="w-56 shrink-0 pr-4 flex flex-col justify-center sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.03)] -ml-5 pl-5 select-none">
+                          <div className="flex items-center gap-2">
+                            <span className={clsx(
+                              "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md tracking-wider shadow-xs flex-shrink-0 uppercase",
+                              row.level === 'R1' ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                              : row.level === 'R2' ? 'bg-sky-50 text-sky-700 border border-sky-200'
+                              : row.level === 'R3' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : row.level === 'R4' ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            )}>
+                              {row.level}
+                            </span>
+                            <span className="text-xs font-bold truncate text-slate-700 tracking-wide font-heading" title={row.label}>
+                              {row.label}
+                            </span>
+                          </div>
+
+                          {/* Progress Bar (ex. "9/12 meses") */}
+                          <div className="mt-1.5 pr-2 w-full flex items-center gap-1.5">
+                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                              <div 
+                                className={clsx(
+                                  "h-full rounded-full transition-all duration-500",
+                                  assignedPercentage === 100 ? "bg-emerald-500" : "bg-blue-500"
+                                )}
+                                style={{ width: `${assignedPercentage}%` }}
+                              />
+                            </div>
+                            <span className="text-[8px] font-extrabold text-slate-400 tracking-tighter w-8 flex-shrink-0 text-right">
+                              {totalRotations}/12m
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 grid grid-cols-12 gap-2 pl-3">
+                          {ACADEMIC_MONTH_INDICES.map((monthIndex) => {
+                            const calendarYear = monthIndex >= 5 ? row.year : row.year + 1;
+                            const cellId = `${selectedResident.id}-${monthIndex}-${calendarYear}`;
+                            const rotation = rotations.find(
+                              r => r.residentId === selectedResident.id && r.month === monthIndex && r.year === calendarYear
+                            );
+
+                            return (
+                              <Droppable key={cellId} droppableId={cellId} isDropDisabled={!isAdmin}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className={clsx(
+                                      "h-11 rounded-lg border-2 border-dashed transition-all duration-200 relative flex items-center justify-center p-0.5",
+                                      snapshot.isDraggingOver 
+                                        ? "bg-blue-50/60 border-blue-400/75 scale-[1.02] shadow-sm" 
+                                        : "border-slate-150 bg-slate-50/30 hover:border-slate-300 hover:bg-slate-50/70"
+                                    )}
+                                  >
+                                    {rotation ? (
+                                      <RotationCard rotation={rotation} index={0} />
+                                    ) : (
+                                      <span className="text-[9px] text-slate-300 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity font-bold tracking-wider uppercase select-none italic">
+                                        Libre
+                                      </span>
+                                    )}
+                                    {provided.placeholder}
+                                  </div>
+                                )}
+                              </Droppable>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : (
                   <p className="text-center text-sm text-slate-500 py-6">Por favor, selecciona un residente.</p>
                 )
