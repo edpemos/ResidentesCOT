@@ -13,8 +13,26 @@ if (!serviceAccountKey) {
 
 try {
   const serviceAccount = JSON.parse(serviceAccountKey);
+  
+  // DIAGNÓSTICO SEGURO (sin comprometer la clave)
+  console.log('--- DIAGNÓSTICO DE CREDENCIALES ---');
+  console.log('Project ID:', serviceAccount.project_id);
   if (serviceAccount.private_key) {
-    // Corregir posibles problemas de escape de saltos de línea al copiar/pegar en los secretos de GitHub
+    const pKey = serviceAccount.private_key;
+    console.log('Key length:', pKey.length);
+    console.log('Starts with BEGIN tag:', pKey.startsWith('-----BEGIN PRIVATE KEY-----'));
+    console.log('Ends with END tag:', pKey.trim().endsWith('-----END PRIVATE KEY-----'));
+    console.log('Has raw newlines:', pKey.includes('\n'));
+    console.log('Has escaped newlines (\\\\n):', pKey.includes('\\n'));
+    console.log('First 40 chars:', pKey.substring(0, 40));
+    console.log('Last 40 chars:', pKey.substring(pKey.length - 40));
+  } else {
+    console.log('private_key is empty or undefined!');
+  }
+  console.log('-----------------------------------');
+
+  if (serviceAccount.private_key) {
+    // Reemplazar tanto \\n como saltos de línea literales mal codificados si los hubiera
     serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
   }
   initializeApp({
