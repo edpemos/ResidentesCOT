@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Calendar, AlertCircle, Loader2, User, X } from 'lucide-react';
+import { Calendar, AlertCircle, Loader2, User, X, Download } from 'lucide-react';
 import clsx from 'clsx';
 
 const ADJUNTO_NAME_MAP: Record<string, string> = {
@@ -415,6 +415,60 @@ const Adjuntos: React.FC = () => {
     return [...filtered].sort((a, b) => shiftPriority(a) - shiftPriority(b));
   }, [scheduleData, currentDate, showOnlyGuardias, showDiferida, highlightedNames, selectedUnits]);
 
+  const [exporting, setExporting] = useState(false);
+
+  const exportToPDF = async () => {
+    const element = document.getElementById('calendar-to-pdf');
+    if (!element) return;
+    
+    setExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      
+      const originalStyle = element.style.overflow;
+      element.style.overflow = 'visible';
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#0b1329' : '#ffffff',
+        windowWidth: 1400
+      });
+      
+      element.style.overflow = originalStyle;
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      
+      const imgWidthPdf = imgWidth * ratio;
+      const imgHeightPdf = imgHeight * ratio;
+      const imgX = (pdfWidth - imgWidthPdf) / 2;
+      const imgY = (pdfHeight - imgHeightPdf) / 2;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidthPdf, imgHeightPdf);
+      
+      const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ];
+      const monthLabel = monthNames[currentYearMonth.month] || 'Mes';
+      pdf.save(`Planificacion_Adjuntos_${monthLabel}_${currentYearMonth.year}.pdf`);
+    } catch (error) {
+      console.error('Error generando el PDF:', error);
+      alert('Hubo un error al generar el PDF. Por favor, inténtelo de nuevo.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full max-w-[98%] xl:max-w-[96%] mx-auto px-2 sm:px-4 pb-10">
       
@@ -571,7 +625,7 @@ const Adjuntos: React.FC = () => {
       </div>
 
       {/* BLOQUE DE CALENDARIO (ABAJO - ANCHO COMPLETO) */}
-      <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-xs flex flex-col overflow-hidden">
+      <div id="calendar-to-pdf" className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-xs flex flex-col overflow-hidden">
         
         {/* Cabecera del calendario */}
         <div className="px-6 py-4 lg:px-4 lg:py-2.5 border-b border-slate-100 dark:border-slate-850 flex flex-col sm:flex-row items-center justify-between gap-4 lg:gap-2 bg-slate-50/50 dark:bg-slate-950/30">
@@ -589,7 +643,26 @@ const Adjuntos: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+          <div data-html2canvas-ignore="true" className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+            {/* Botón Descargar PDF */}
+            <button
+              onClick={exportToPDF}
+              disabled={exporting}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all border cursor-pointer select-none bg-teal-655 hover:bg-teal-700 text-white border-teal-750 shadow-md shadow-teal-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Generando PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Descargar PDF</span>
+                </>
+              )}
+            </button>
+
             {/* Solo Guardias Toggle */}
             <button
               onClick={() => {
