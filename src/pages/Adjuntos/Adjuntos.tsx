@@ -191,14 +191,27 @@ const Adjuntos: React.FC = () => {
     return days;
   }, [currentYearMonth]);
 
-  // Planificación del día seleccionado actualmente, filtrada si "Solo Guardias" está activo
+  // Planificación del día seleccionado actualmente, filtrada si "Solo Guardias" o filtros por médico/unidad están activos
   const selectedDayPlan = useMemo(() => {
     const rawPlan = scheduleData[currentDate]?.schedule || [];
-    if (showOnlyGuardias) {
-      return rawPlan.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
+    
+    // Primero, filtrar por guardia si el modo "Solo Guardias" está activo
+    let filtered = showOnlyGuardias 
+      ? rawPlan.filter(s => s.status === 'De Guardia' || s.shift === 'GPF')
+      : rawPlan;
+
+    // Segundo, si hay filtros activos (médicos o especialidades), filtramos la lista detallada
+    const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
+    if (hasActiveFilters) {
+      filtered = filtered.filter(s => {
+        const matchesName = highlightedNames.has(s.name);
+        const matchesUnit = s.unit && selectedUnits.has(s.unit);
+        return matchesName || matchesUnit;
+      });
     }
-    return rawPlan;
-  }, [scheduleData, currentDate, showOnlyGuardias]);
+
+    return filtered;
+  }, [scheduleData, currentDate, showOnlyGuardias, highlightedNames, selectedUnits]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -541,11 +554,19 @@ const Adjuntos: React.FC = () => {
                           ? 'bg-red-500/10 text-red-500 border border-red-500/20'
                           : shift.status === 'Guardia Localizada'
                             ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20'
+                          : shift.status === 'Mañana'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                           : shift.status === 'Tarde'
                             ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+                          : shift.status === 'Planta'
+                            ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20'
+                          : shift.status === 'Gestión'
+                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                          : shift.status === 'Curso/Congreso'
+                            ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
                           : shift.status === 'Vacaciones'
-                            ? 'bg-teal-500/10 text-teal-500 border border-teal-500/20'
-                            : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                            ? 'bg-pink-500/10 text-pink-500 border border-pink-500/20'
+                            : 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
                       }`}>
                         {shift.status}
                       </span>

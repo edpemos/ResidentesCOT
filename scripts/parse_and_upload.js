@@ -170,7 +170,22 @@ async function parseAndUpload() {
           // Si el turno está vacío, no lo guardamos
           if (rawShift === '') return;
 
-          const status = SHIFT_MAP[rawShift] || rawShift;
+          let status = SHIFT_MAP[rawShift] || rawShift;
+          
+          // Deducir estado general a partir de prefijos comunes del hospital
+          if (status === rawShift) {
+            if (rawShift.startsWith('QM') || rawShift === 'CM' || rawShift === 'CMU') {
+              status = 'Mañana';
+            } else if (rawShift.startsWith('QT') || rawShift === 'CT' || rawShift === 'CTU') {
+              status = 'Tarde';
+            } else if (rawShift === 'PLA') {
+              status = 'Planta';
+            } else if (rawShift === 'Ges') {
+              status = 'Gestión';
+            } else if (rawShift === 'Cur') {
+              status = 'Curso/Congreso';
+            }
+          }
 
           if (!scheduleByDate[formattedDate]) {
             scheduleByDate[formattedDate] = [];
