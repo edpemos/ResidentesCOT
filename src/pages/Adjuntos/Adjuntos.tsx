@@ -4,18 +4,35 @@ import { db } from '../../services/firebase';
 import { Calendar, AlertCircle, Loader2, User, X, Download } from 'lucide-react';
 import clsx from 'clsx';
 
-const normalizeName = (name: string): string => {
-  return name
-    .replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '') 
-    .replace(/./g, '')                         
-    .replace(/s+/g, ' ')                       
-    .trim()                                     
-    .toLowerCase()                              
-    .normalize("NFD")                           
-    .replace(/[̀-ͯ]/g, "");           
+const PREFIXES_TO_REMOVE = ['dr.', 'dra.', 'dr', 'dra'];
+
+const normalizeName = (name: string | undefined | null): string => {
+  if (!name) return '';
+  
+  let clean = name.trim();
+  const lower = clean.toLowerCase();
+  for (const prefix of PREFIXES_TO_REMOVE) {
+    if (lower.startsWith(prefix)) {
+      clean = clean.slice(prefix.length).trim();
+      break;
+    }
+  }
+  
+  // Quitar puntos
+  clean = clean.split('.').join('');
+  
+  // Separar y volver a unir para quitar múltiples espacios
+  clean = clean.split(/\s+/).join(' ');
+  
+  return clean
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 };
 
-const mapNormalizedToFriendlyName = (normName: string, originalName: string): string => {
+const mapNormalizedToFriendlyName = (normName: string, originalName: string | undefined | null): string => {
+  if (!originalName) return '';
+  
   // 1. Coincidencias específicas por prefijo más largo
   if (normName.startsWith('alejandro lin')) return 'Liñán';
   if (normName.startsWith('alejandro mon')) return 'Monge';
@@ -51,8 +68,16 @@ const mapNormalizedToFriendlyName = (normName: string, originalName: string): st
   if (normName.startsWith('fernando')) return 'Baquero';
   if (normName.startsWith('silvia')) return 'Expósito';
 
-  // Si no hay regla, devolvemos el nombre original limpio
-  return originalName.replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '').trim();
+  // Si no hay regla, devolvemos el nombre original sin Dr./Dra.
+  let cleanOriginal = originalName.trim();
+  const lowerOriginal = cleanOriginal.toLowerCase();
+  for (const prefix of PREFIXES_TO_REMOVE) {
+    if (lowerOriginal.startsWith(prefix)) {
+      cleanOriginal = cleanOriginal.slice(prefix.length).trim();
+      break;
+    }
+  }
+  return cleanOriginal;
 };
 
 interface AttendingShift {
@@ -658,9 +683,14 @@ const Adjuntos: React.FC = () => {
               <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider font-heading truncate">
                 Calendario del Servicio
               </h3>
-              <p className="text-[10px] lg:text-[9px] text-slate-505 dark:text-slate-400 font-medium mt-0.5">
-                Turnos, guardias y actividades programadas.
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[10px] lg:text-[9px] text-slate-505 dark:text-slate-400 font-medium">
+                  Turnos, guardias y actividades programadas.
+                </p>
+                <span className="text-[7.5px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 font-black px-1.5 py-0.5 rounded uppercase leading-none">
+                  Build v2.5 (Remap Activo)
+                </span>
+              </div>
             </div>
           </div>
 
