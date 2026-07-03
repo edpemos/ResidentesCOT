@@ -701,31 +701,26 @@ const Adjuntos: React.FC = () => {
                       </div>
 
                       {/* Lista de Badges de Actividades */}
-                      <div className="flex-1 flex flex-col gap-0.5 overflow-hidden pr-0.5 mt-1">
+                      <div className="flex-1 flex flex-col gap-1 overflow-hidden pr-0.5 mt-1">
                         {matchingShifts.slice(0, 4).map((s, si) => {
                           const { bg, label } = getShiftBadgeStyle(s.status, s.shift);
                           const shortName = s.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 1).join('');
+                          const badgeText = s.name ? `${label}: ${shortName}` : label;
                           
                           return (
-                            <div key={si} className="flex flex-col items-stretch">
-                              {/* Badge del Turno */}
-                              <span className={clsx(
-                                "text-[7.5px] font-black uppercase rounded py-px text-center truncate leading-tight shadow-2xs",
+                            <span
+                              key={si}
+                              className={clsx(
+                                "text-[8.5px] font-black uppercase rounded py-0.5 px-1 text-center truncate leading-tight shadow-2xs border border-black/5",
                                 bg
-                              )}>
-                                {label}
-                              </span>
-                              {/* Nombre del Cirujano (bajo el badge) */}
-                              {s.name && (
-                                <span className="text-[7.5px] font-bold text-slate-505 dark:text-slate-400 text-center block mt-0.5 leading-none truncate">
-                                  ↳ {shortName}
-                                </span>
                               )}
-                            </div>
+                            >
+                              {badgeText}
+                            </span>
                           );
                         })}
                         {matchingShifts.length > 4 && (
-                          <span className="text-[6.5px] font-black text-slate-400 dark:text-slate-550 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
+                          <span className="text-[7.5px] font-black text-slate-400 dark:text-slate-550 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
                             +{matchingShifts.length - 4} más
                           </span>
                         )}
