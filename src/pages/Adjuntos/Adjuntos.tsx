@@ -632,7 +632,7 @@ const Adjuntos: React.FC = () => {
               <div className="grid grid-cols-7 gap-1.5">
                 {calendarDays.map((day, idx) => {
                   if (!day) {
-                    return <div key={`empty-${idx}`} className="h-[6.5rem] bg-slate-100/30 dark:bg-slate-900/10 rounded-xl border border-transparent opacity-40" />;
+                    return <div key={`empty-${idx}`} className="h-[7.5rem] bg-slate-100/30 dark:bg-slate-900/10 rounded-xl border border-transparent opacity-40" />;
                   }
 
                   const hasData = !!scheduleData[day.dateKey];
@@ -677,7 +677,7 @@ const Adjuntos: React.FC = () => {
                         setIsModalOpen(true);
                       }}
                       className={clsx(
-                        "rounded-xl p-1 h-[6.5rem] overflow-hidden flex flex-col justify-start items-stretch border transition-all duration-200 relative group text-left select-none shadow-xs",
+                        "rounded-xl p-1 h-[7.5rem] overflow-hidden flex flex-col justify-start items-stretch border transition-all duration-200 relative group text-left select-none shadow-xs",
                         isCellEmpty
                           ? "bg-[#f1f5f9]/20 dark:bg-slate-955/5 border-slate-200/30 dark:border-slate-800/20 opacity-70"
                           : "bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-xs",
