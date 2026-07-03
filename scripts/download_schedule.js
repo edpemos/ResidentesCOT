@@ -56,16 +56,8 @@ async function run() {
       console.log('✅ Cookies aceptadas.');
     }
 
-    console.log('⏳ Esperando a que carguen los datos de la planificación (15s)...');
-    await page.waitForTimeout(15000); 
-
-    try {
-      const loadedScreenshot = path.resolve('./group_loaded.png');
-      await page.screenshot({ path: loadedScreenshot });
-      console.log(`📸 Captura de la página cargada guardada en: ${loadedScreenshot}`);
-    } catch (e) {
-      console.error('No se pudo tomar la captura de pantalla cargada:', e);
-    }
+    console.log('⏳ Esperando a que carguen los datos de la planificación (8s)...');
+    await page.waitForTimeout(8000); 
 
     // Directorio donde guardaremos los archivos Excel descargados
     const downloadDir = path.resolve('./downloads');
@@ -73,25 +65,29 @@ async function run() {
       fs.mkdirSync(downloadDir, { recursive: true });
     }
 
+    // Selector del botón de Excel: busca el botón Mui o su contenedor con el aria-label correcto
+    const exportButtonSelector = 'button[title="Exportar tabla a Excel"], [aria-label="Exportar tabla a Excel"] button';
+    // Selector para avanzar mes: el segundo botón dentro de la pila MuiStack que precede al botón "Mes actual"
+    const nextMonthSelector = 'button:has-text("Mes actual") >> xpath=preceding-sibling::div[1] >> button >> nth=1';
+
     // Vamos a procesar 3 meses: el actual y los 2 siguientes
     for (let i = 0; i < 3; i++) {
       console.log(`\n📅 Procesando mes ${i + 1} de 3...`);
 
       if (i > 0) {
         console.log('➡️ Navegando al siguiente mes...');
-        const nextMonthBtn = page.locator('button:has-text("Siguiente"), button:has-text(">"), .next-month, [aria-label*="siguiente" i], [class*="next" i]');
+        const nextMonthBtn = page.locator(nextMonthSelector);
         if (await nextMonthBtn.count() > 0) {
           await nextMonthBtn.first().click();
-          // Esperamos 3 segundos para que se renderice la nueva tabla
-          await page.waitForTimeout(3000);
+          // Esperamos 6 segundos para que cargue la tabla del nuevo mes por AJAX
+          await page.waitForTimeout(6000);
         } else {
-          console.warn('⚠️ No se ha encontrado un botón obvio para avanzar de mes. Es posible que el selector necesite afinarse.');
+          console.warn('⚠️ No se ha encontrado el botón para avanzar de mes.');
         }
       }
 
       console.log('📥 Intentando exportar tabla a Excel...');
-      // Buscamos el botón de exportación a Excel
-      const exportButton = page.locator('button:has-text("Excel"), a:has-text("Excel"), button:has-text("Exportar"), a:has-text("Exportar"), .btn-excel, .export-excel');
+      const exportButton = page.locator(exportButtonSelector);
 
       if (await exportButton.count() > 0) {
         // Escuchamos el evento de descarga que iniciará al hacer clic
