@@ -12,8 +12,13 @@ if (!serviceAccountKey) {
 }
 
 try {
+  const serviceAccount = JSON.parse(serviceAccountKey);
+  if (serviceAccount.private_key) {
+    // Corregir posibles problemas de escape de saltos de línea al copiar/pegar en los secretos de GitHub
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  }
   initializeApp({
-    credential: cert(JSON.parse(serviceAccountKey))
+    credential: cert(serviceAccount)
   });
 } catch (e) {
   console.error('❌ Error al inicializar Firebase Admin:', e);
