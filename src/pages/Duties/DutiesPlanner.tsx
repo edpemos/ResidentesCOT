@@ -784,7 +784,7 @@ const DutiesPlanner: React.FC = () => {
           >
             <thead>
               {/* Day numbers row */}
-              <tr className="bg-slate-50 dark:bg-slate-950 h-14 lg:h-7">
+              <tr className="bg-slate-50 dark:bg-slate-950 h-9 lg:h-7">
                 <th className="sticky top-0 left-0 z-30 bg-slate-50 dark:bg-slate-950 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-1 lg:py-1 sm:px-4 border-r border-b border-slate-200/80 dark:border-slate-850/60">
                   <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Residente</span>
                 </th>
@@ -804,7 +804,7 @@ const DutiesPlanner: React.FC = () => {
                       onClick={() => handleHeaderClick(day)}
                       title={canEdit ? "Haz clic para alternar día festivo global" : undefined}
                       className={clsx(
-                        "sticky top-0 z-20 mobile-duties-day-col lg:w-12 text-center py-1 lg:py-1 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[45px] lg:text-[10px] font-black",
+                        "sticky top-0 z-20 mobile-duties-day-col lg:w-12 text-center py-1 lg:py-1 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[11px] lg:text-[10px] font-black",
                         isRedDay ? "bg-red-50 dark:bg-red-950 text-red-500" : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400",
                         isMandatory && "bg-red-500/[0.06] dark:bg-red-500/[0.12]",
                         isMandatoryRucot && "bg-blue-600/[0.06] dark:bg-blue-600/[0.12]",
@@ -818,8 +818,8 @@ const DutiesPlanner: React.FC = () => {
               </tr>
 
               {/* Day name abbreviation row */}
-              <tr className="bg-slate-50 dark:bg-slate-950 h-12 lg:h-8">
-                <th className="sticky top-14 lg:top-8 left-0 z-30 bg-slate-50 dark:bg-slate-950 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-1 lg:py-1 sm:px-4 border-r border-b border-slate-200 dark:border-slate-850">
+              <tr className="bg-slate-50 dark:bg-slate-950 h-9 lg:h-8">
+                <th className="sticky top-9 lg:top-8 left-0 z-30 bg-slate-50 dark:bg-slate-950 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-1 lg:py-1 sm:px-4 border-r border-b border-slate-200 dark:border-slate-850">
                   <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Turno / Día</span>
                 </th>
                 {daysArray.map((day) => {
@@ -844,7 +844,7 @@ const DutiesPlanner: React.FC = () => {
                       onClick={() => handleWeekdayClick(day)}
                       title={canEdit ? "Haz clic para alternar obligatoriedad (Guardia / RUCOT / Ninguna)" : undefined}
                       className={clsx(
-                        "sticky top-14 lg:top-7 z-20 mobile-duties-day-col lg:w-12 text-center py-0.5 lg:py-0.5 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[36px] lg:text-[10px] font-black relative",
+                        "sticky top-9 lg:top-7 z-20 mobile-duties-day-col lg:w-12 text-center py-0.5 lg:py-0.5 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[10px] font-black relative",
                         isRedDay ? "bg-red-50 dark:bg-red-950 text-red-500" : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400",
                         isMandatory && "bg-red-500/[0.06] dark:bg-red-500/[0.12]",
                         isMandatoryRucot && "bg-blue-600/[0.06] dark:bg-blue-600/[0.12]",
@@ -1060,7 +1060,7 @@ const DutiesPlanner: React.FC = () => {
                             key={day}
                             onClick={() => handleCellClick(res.id, day, isSaliente)}
                             className={clsx(
-                              "mobile-duties-day-col h-24 lg:w-12 lg:h-9 text-center p-0.5 border-r border-b border-slate-200/80 border-b-slate-150 dark:border-slate-850/60 dark:border-b-slate-800/80 relative group",
+                              "mobile-duties-day-col h-11 lg:w-12 lg:h-9 text-center p-0.5 border-r border-b border-slate-200/80 border-b-slate-150 dark:border-slate-850/60 dark:border-b-slate-800/80 relative group",
                               isWeekendOrHoliday && "bg-red-50/10 dark:bg-red-950/5",
                               isMandatory && "bg-red-500/[0.04] dark:bg-red-500/[0.08]",
                               isMandatoryRucot && "bg-blue-600/[0.04] dark:bg-blue-600/[0.08]",
@@ -1080,13 +1080,13 @@ const DutiesPlanner: React.FC = () => {
                                   className="w-full h-full rounded-md relative overflow-hidden border border-slate-200 dark:border-slate-850 shadow-2xs transition-all active:scale-95"
                                 >
                                   <div 
-                                    className="absolute inset-0 flex items-start justify-start p-1 font-black leading-none text-[36px] lg:text-[9px] bg-blue-600 text-white"
+                                    className="absolute inset-0 flex items-start justify-start p-1 font-black leading-none text-[9px] bg-blue-600 text-white"
                                     style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
                                   >
                                     {primaryLabel}
                                   </div>
                                   <div 
-                                    className="absolute inset-0 flex items-end justify-end p-1 bg-red-500 text-white font-black leading-none text-[36px] lg:text-[9px]"
+                                    className="absolute inset-0 flex items-end justify-end p-1 bg-red-500 text-white font-black leading-none text-[9px]"
                                     style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
                                   >
                                     {secondaryLabel}
@@ -1110,7 +1110,7 @@ const DutiesPlanner: React.FC = () => {
                                   <div 
                                     className={clsx(
                                       "absolute inset-0 flex items-start justify-start p-1 font-black leading-none",
-                                      primaryLabel.length > 2 ? "text-[24px] lg:text-[7px]" : "text-[36px] lg:text-[9px]",
+                                      primaryLabel.length > 2 ? "text-[8px] lg:text-[7px]" : "text-[9px]",
                                       primStyle.bg,
                                       primStyle.text
                                     )}
@@ -1121,7 +1121,7 @@ const DutiesPlanner: React.FC = () => {
                                   <div 
                                     className={clsx(
                                       "absolute inset-0 flex items-end justify-end p-1 bg-orange-500 text-white font-black leading-none",
-                                      secondaryLabel.length > 2 ? "text-[24px] lg:text-[7px]" : "text-[36px] lg:text-[9px]"
+                                      secondaryLabel.length > 2 ? "text-[8px] lg:text-[7px]" : "text-[9px]"
                                     )}
                                     style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
                                   >
@@ -1160,7 +1160,7 @@ const DutiesPlanner: React.FC = () => {
                                   title={cellTitle}
                                   className={clsx(
                                     "w-full h-full rounded-md flex flex-col items-center justify-center font-black tracking-wider shadow-2xs border transition-all active:scale-95 relative",
-                                    displayLabel.length > 2 ? "text-[28px] lg:text-[8px]" : "text-[45px] lg:text-[10px]",
+                                    displayLabel.length > 2 ? "text-[9px] lg:text-[8px]" : "text-[11px] lg:text-[10px]",
                                     style.bg,
                                     style.text,
                                     style.border,
