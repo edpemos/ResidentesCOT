@@ -126,6 +126,10 @@ const Adjuntos: React.FC = () => {
   // Estado para controlar apertura de modal de detalle
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Estados de apertura de desplegables de filtros
+  const [unitsOpen, setUnitsOpen] = useState(false);
+  const [namesOpen, setNamesOpen] = useState(false);
+
   // Cargar datos de Firestore para el mes seleccionado
   useEffect(() => {
     const fetchMonthSchedule = async () => {
@@ -141,7 +145,25 @@ const Adjuntos: React.FC = () => {
         const docs: Record<string, AttendingDayDoc> = {};
         
         querySnapshot.forEach((doc) => {
-          docs[doc.id] = doc.data() as AttendingDayDoc;
+          const data = doc.data() as AttendingDayDoc;
+          // Aplicar remapeo de unidades del lado del cliente para cambios inmediatos
+          if (data.schedule) {
+            data.schedule = data.schedule.map(s => {
+              const lowerName = s.name.toLowerCase();
+              let newUnit = s.unit || '';
+              if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
+                  (lowerName.includes('jose') || lowerName.includes('josé')) && 
+                  (lowerName.includes('maria') || lowerName.includes('maría'))) {
+                newUnit = 'Trauma';
+              } else if (lowerName.includes('veronica') || lowerName.includes('verónica')) {
+                newUnit = 'Trauma';
+              } else if (newUnit === 'Miembro Superior') {
+                newUnit = '';
+              }
+              return { ...s, unit: newUnit };
+            });
+          }
+          docs[doc.id] = data;
         });
 
         setScheduleData(docs);
@@ -310,10 +332,10 @@ const Adjuntos: React.FC = () => {
           <div>
             <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100 uppercase tracking-widest flex items-center gap-1.5 font-display">
               <Users className="w-4 h-4 text-teal-500" />
-              Filtros de Búsqueda y Especialidad
+              Filtros Desplegables
             </h4>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-              Haz clic en una unidad o médico para aislar su planificación del mes directamente en el calendario.
+              Filtra por Unidad o por Médico para aislar su planificación del mes directamente en el calendario.
             </p>
           </div>
           
@@ -330,58 +352,108 @@ const Adjuntos: React.FC = () => {
         {uniqueNames.length === 0 && uniqueUnits.length === 0 ? (
           <p className="text-xs text-slate-400 dark:text-slate-550 italic">No hay profesionales disponibles en este mes.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+          <div className="flex flex-col sm:flex-row gap-4 relative">
             
-            {/* Especialidades */}
-            <div className="md:col-span-4 space-y-2">
-              <h5 className="text-[9px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest border-l-2 border-teal-500 pl-2">
+            {/* Desplegable 1: Especialidades / Unidades */}
+            <div className="relative w-full sm:w-64">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5 pl-1">
                 Unidad / Especialidad
-              </h5>
-              <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
-                {uniqueUnits.map(unit => {
-                  const isSelected = selectedUnits.has(unit);
-                  return (
-                    <button
-                      key={unit}
-                      onClick={() => toggleUnitHighlight(unit)}
-                      className={clsx(
-                        'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer select-none',
-                        isSelected
-                          ? 'bg-teal-600 text-white border-teal-700 shadow-md shadow-teal-600/10 font-bold'
-                          : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
-                      )}
-                    >
-                      {unit}
-                    </button>
-                  );
-                })}
-              </div>
+              </label>
+              <button
+                onClick={() => {
+                  setUnitsOpen(!unitsOpen);
+                  setNamesOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 border border-slate-200/50 dark:border-slate-800/40 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-all cursor-pointer select-none"
+              >
+                <span>
+                  {selectedUnits.size === 0 
+                    ? "Todas las unidades" 
+                    : selectedUnits.size === 1 
+                      ? Array.from(selectedUnits)[0] 
+                      : `${selectedUnits.size} unidades seleccionadas`}
+                </span>
+                <span className="text-[10px] text-slate-400">▼</span>
+              </button>
+
+              {unitsOpen && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setUnitsOpen(false)} />
+                  <div className="absolute top-full left-0 z-30 mt-1 w-full max-h-72 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {uniqueUnits.map(unit => {
+                      const isSelected = selectedUnits.has(unit);
+                      return (
+                        <button
+                          key={unit}
+                          onClick={() => toggleUnitHighlight(unit)}
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-955 rounded-lg transition-all cursor-pointer text-left"
+                        >
+                          <span>{unit}</span>
+                          <div className={clsx(
+                            "w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all",
+                            isSelected 
+                              ? "bg-teal-500 border-teal-650 text-white" 
+                              : "border-slate-300 dark:border-slate-700"
+                          )}>
+                            {isSelected && <span className="text-[9px] font-black">✓</span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Médicos */}
-            <div className="md:col-span-8 space-y-2">
-              <h5 className="text-[9px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest border-l-2 border-emerald-500 pl-2">
+            {/* Desplegable 2: Médicos */}
+            <div className="relative w-full sm:w-72">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5 pl-1">
                 Médico Adjunto
-              </h5>
-              <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
-                {uniqueNames.map(name => {
-                  const isSelected = highlightedNames.has(name);
-                  return (
-                    <button
-                      key={name}
-                      onClick={() => toggleNameHighlight(name)}
-                      className={clsx(
-                        'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer select-none',
-                        isSelected
-                          ? 'bg-emerald-600 text-white border-emerald-700 shadow-md shadow-emerald-600/10 font-bold'
-                          : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
-                      )}
-                    >
-                      {name}
-                    </button>
-                  );
-                })}
-              </div>
+              </label>
+              <button
+                onClick={() => {
+                  setNamesOpen(!namesOpen);
+                  setUnitsOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-955 border border-slate-200/50 dark:border-slate-800/40 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-all cursor-pointer select-none"
+              >
+                <span>
+                  {highlightedNames.size === 0 
+                    ? "Todos los médicos" 
+                    : highlightedNames.size === 1 
+                      ? Array.from(highlightedNames)[0] 
+                      : `${highlightedNames.size} médicos seleccionados`}
+                </span>
+                <span className="text-[10px] text-slate-400">▼</span>
+              </button>
+
+              {namesOpen && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setNamesOpen(false)} />
+                  <div className="absolute top-full left-0 z-30 mt-1 w-full max-h-72 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {uniqueNames.map(name => {
+                      const isSelected = highlightedNames.has(name);
+                      return (
+                        <button
+                          key={name}
+                          onClick={() => toggleNameHighlight(name)}
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-950 rounded-lg transition-all cursor-pointer text-left"
+                        >
+                          <span>{name}</span>
+                          <div className={clsx(
+                            "w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all",
+                            isSelected 
+                              ? "bg-emerald-500 border-emerald-650 text-white" 
+                              : "border-slate-300 dark:border-slate-700"
+                          )}>
+                            {isSelected && <span className="text-[9px] font-black">✓</span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
           </div>

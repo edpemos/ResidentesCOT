@@ -143,7 +143,20 @@ async function parseAndUpload() {
 
         const sanitizedName = name.trim();
         const identityId = row[2] ? String(row[2]).trim() : ''; // Columna 2 (C): número de identidad
-        const unit = row[4] ? String(row[4]).trim() : ''; // Columna 4 (E): unidad a la que pertenecen (Especialidad)
+        let unit = row[4] ? String(row[4]).trim() : ''; // Columna 4 (E): unidad a la que pertenecen (Especialidad)
+
+        // Reglas de reasignación de Unidades:
+        // Jose Maria Perez -> Trauma, Veronica -> Trauma, Miembro Superior -> vacío/eliminado
+        const lowerName = sanitizedName.toLowerCase();
+        if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
+            (lowerName.includes('jose') || lowerName.includes('josé')) && 
+            (lowerName.includes('maria') || lowerName.includes('maría'))) {
+          unit = 'Trauma';
+        } else if (lowerName.includes('veronica') || lowerName.includes('verónica')) {
+          unit = 'Trauma';
+        } else if (unit === 'Miembro Superior') {
+          unit = '';
+        }
 
         // Comprobar si tiene alguna actividad en todo el mes (si todos los días están vacíos)
         let hasAnyActivity = false;
