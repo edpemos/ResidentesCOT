@@ -13,13 +13,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+import { getDoc, doc } from 'firebase/firestore';
+
 async function check() {
   try {
-    const snap = await getDocs(collection(db, 'readers'));
-    console.log('Readers count:', snap.size);
-    snap.forEach(d => {
-      console.log(' - Reader:', d.id, JSON.stringify(d.data()));
-    });
+    const email = 'marianogarciaborbolla@gmail.com';
+    const docRef = doc(db, 'readers', email);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      console.log('Reader found:', snap.id, JSON.stringify(snap.data()));
+    } else {
+      console.log('Reader not found:', email);
+    }
   } catch (err) {
     console.error('Error:', err);
   }

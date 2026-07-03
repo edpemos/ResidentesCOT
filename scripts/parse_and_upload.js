@@ -183,48 +183,44 @@ async function parseAndUpload() {
           // Si el turno está vacío, no lo guardamos
           if (rawShift === '') return;
 
-          let status = SHIFT_MAP[rawShift] || rawShift;
-          
-          // Deducir estado general del hospital de forma exacta
-          if (rawShift === 'QMU') {
-            status = 'Diferida Mañana';
-          } else if (rawShift === 'QTU') {
-            status = 'Diferida Tarde';
-          } else if (rawShift === 'CM' || rawShift.startsWith('CM')) {
-            status = 'Consulta Mañana';
-          } else if (rawShift === 'CT' || rawShift.startsWith('CT')) {
-            status = 'Consulta Tarde';
-          } else if (rawShift.startsWith('QM')) {
-            status = 'Quirófano Mañana';
-          } else if (rawShift.startsWith('QT')) {
-            status = 'Quirófano Tarde';
-          } else if (rawShift === 'PLA') {
-            status = 'Planta';
-          } else if (rawShift === 'Ges') {
-            status = 'Gestión';
-          } else if (rawShift === 'Cur' || rawShift === 'C') {
-            status = 'Curso/Congreso';
-          } else if (rawShift.includes('+')) {
-            const parts = rawShift.split('+').map(p => p.trim());
-            const hasQM = parts.some(p => p.startsWith('QM') || p === 'CM' || p === 'QMU');
-            const hasQT = parts.some(p => p.startsWith('QT') || p === 'CT' || p === 'QTU');
-            if (hasQM && hasQT) {
-              status = 'Combinado M+T';
-            } else {
-              status = 'Combinado';
+          // Separar turnos combinados por el caracter '+'
+          const shiftParts = rawShift.split('+').map(p => p.trim()).filter(Boolean);
+
+          shiftParts.forEach(shiftPart => {
+            let status = SHIFT_MAP[shiftPart] || shiftPart;
+            
+            // Deducir estado general del hospital de forma exacta para cada sub-turno
+            if (shiftPart === 'QMU') {
+              status = 'Diferida Mañana';
+            } else if (shiftPart === 'QTU') {
+              status = 'Diferida Tarde';
+            } else if (shiftPart === 'CM' || shiftPart.startsWith('CM')) {
+              status = 'Consulta Mañana';
+            } else if (shiftPart === 'CT' || shiftPart.startsWith('CT')) {
+              status = 'Consulta Tarde';
+            } else if (shiftPart.startsWith('QM')) {
+              status = 'Quirófano Mañana';
+            } else if (shiftPart.startsWith('QT')) {
+              status = 'Quirófano Tarde';
+            } else if (shiftPart === 'PLA') {
+              status = 'Planta';
+            } else if (shiftPart === 'Ges') {
+              status = 'Gestión';
+            } else if (shiftPart === 'Cur' || shiftPart === 'C') {
+              status = 'Curso/Congreso';
             }
-          }
 
-          if (!scheduleByDate[formattedDate]) {
-            scheduleByDate[formattedDate] = [];
-          }
+            if (!scheduleByDate[formattedDate]) {
+              scheduleByDate[formattedDate] = [];
+            }
 
-          scheduleByDate[formattedDate].push({
-            name: sanitizedName,
-            identityId: identityId, // Oculto detrás de la interfaz, pero almacenado en DB
-            unit: unit,             // Unidad a la que pertenecen
-            shift: rawShift,
-            status: status
+            scheduleByDate[formattedDate].push({
+              name: sanitizedName,
+              identityId: identityId, // Oculto detrás de la interfaz, pero almacenado en DB
+              unit: unit,             // Unidad a la que pertenecen
+              shift: shiftPart,
+              status: status
+            });
           });
         });
       }

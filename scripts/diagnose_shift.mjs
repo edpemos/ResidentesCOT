@@ -101,19 +101,23 @@ for (const m of matches) {
 
   // Clasificación que haría el script
   const raw = m.trimmed;
-  let status = raw;
-  if      (raw === 'QMU')                              status = '→ Diferida Mañana';
-  else if (raw === 'QTU')                              status = '→ Diferida Tarde';
-  else if (raw === 'CM' || raw.startsWith('CM'))         status = '→ Consulta Mañana';
-  else if (raw === 'CT' || raw.startsWith('CT'))         status = '→ Consulta Tarde';
-  else if (raw.startsWith('QM'))                       status = '→ Quirófano Mañana';
-  else if (raw.startsWith('QT'))                       status = '→ Quirófano Tarde';
-  else if (raw === 'PLA')                              status = '→ Planta';
-  else if (raw === 'Ges')                              status = '→ Gestión';
-  else if (raw === 'Cur' || raw === 'C')               status = '→ Curso/Congreso';
-  else if (raw === 'GPF' || raw === 'G')               status = '→ De Guardia';
-  else if (raw === 'GLO')                              status = '→ Localizado';
-
-  console.log(`🏷️  Status asignado  : ${status}`);
-  console.log('═══════════════════════════════════════════\n');
+  const parts = raw.split('+').map(p => p.trim()).filter(Boolean);
+  
+  console.log(`🔍 Clasificación del script (${parts.length} turnos):`);
+  parts.forEach(part => {
+    let status = part;
+    if      (part === 'QMU')                              status = 'Diferida Mañana';
+    else if (part === 'QTU')                              status = 'Diferida Tarde';
+    else if (part === 'CM' || part.startsWith('CM'))         status = 'Consulta Mañana';
+    else if (part === 'CT' || part.startsWith('CT'))         status = 'Consulta Tarde';
+    else if (part.startsWith('QM'))                       status = 'Quirófano Mañana';
+    else if (part.startsWith('QT'))                       status = 'Quirófano Tarde';
+    else if (part === 'PLA')                              status = 'Planta';
+    else if (part === 'Ges')                              status = 'Gestión';
+    else if (part === 'Cur' || part === 'C')               status = 'Curso/Congreso';
+    else if (part === 'GPF' || part === 'G')               status = 'De Guardia';
+    else if (part === 'GLO')                              status = 'Localizado';
+    console.log(`   └─ "${part}" ──> ${status}`);
+  });
 }
+console.log('═══════════════════════════════════════════');
