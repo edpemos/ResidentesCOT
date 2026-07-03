@@ -35,6 +35,29 @@ const getFriendlyDate = (dateStr: string) => {
   return `${days[dateObj.getDay()]}, ${d} de ${MONTHS_SPANISH[m - 1]} de ${y}`;
 };
 
+const getShiftBadgeClasses = (status: string) => {
+  switch (status) {
+    case 'De Guardia':
+      return 'bg-red-500/10 text-red-500 border border-red-500/20';
+    case 'Localizado':
+      return 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
+    case 'Quirófano Mañana':
+    case 'Diferida Mañana':
+      return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-450 border border-yellow-500/20';
+    case 'Quirófano Tarde':
+    case 'Diferida Tarde':
+      return 'bg-orange-500/10 text-orange-550 dark:text-orange-400 border border-orange-500/20';
+    case 'Consulta':
+      return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+    case 'Curso/Congreso':
+      return 'bg-purple-500/10 text-purple-500 border border-purple-500/20';
+    case 'Planta':
+      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20';
+    default:
+      return 'bg-slate-500/10 text-slate-500 border border-slate-500/20';
+  }
+};
+
 const Adjuntos: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -338,6 +361,11 @@ const Adjuntos: React.FC = () => {
                   const isHighlighted = (highlightedNames.size > 0 && hasHighlightedPerson) || 
                                         (selectedUnits.size > 0 && hasHighlightedUnit);
 
+                  const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
+                  const matchingShifts = hasActiveFilters
+                    ? activeShiftsForHighlight.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
+                    : [];
+
                   return (
                     <button
                       key={day.dateKey}
@@ -363,27 +391,52 @@ const Adjuntos: React.FC = () => {
                         {day.dayNumber}
                       </span>
 
-                      {/* Lista de médicos de guardia (GPF) */}
-                      {dayGuardias.length > 0 && (
+                      {/* Contenido Dinámico según filtros */}
+                      {hasActiveFilters ? (
                         <div className="w-full flex flex-col gap-0.5 mt-1 overflow-hidden">
-                          {dayGuardias.slice(0, 2).map((g, gi) => {
-                            const shortName = g.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 2).join(' ');
+                          {matchingShifts.slice(0, 3).map((s, si) => {
+                            const shortName = s.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 1).join('');
                             return (
                               <span
-                                key={gi}
-                                className="text-[7.5px] font-extrabold uppercase bg-red-500/15 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 rounded px-1 py-0.5 truncate w-full block leading-tight text-center"
-                                title={`${g.name} - Guardia`}
+                                key={si}
+                                className={clsx(
+                                  "text-[7px] font-extrabold uppercase border rounded px-0.5 py-0.5 truncate w-full block leading-none text-center",
+                                  getShiftBadgeClasses(s.status)
+                                )}
+                                title={`${s.name} - ${s.shift}`}
                               >
-                                {shortName}
+                                {shortName}: {s.shift}
                               </span>
                             );
                           })}
-                          {dayGuardias.length > 2 && (
-                            <span className="text-[6.5px] font-black text-slate-400 dark:text-slate-500 text-center block w-full mt-0.5 uppercase tracking-wide">
-                              +{dayGuardias.length - 2} Guardias
+                          {matchingShifts.length > 3 && (
+                            <span className="text-[6.5px] font-black text-slate-455 dark:text-slate-500 text-center block w-full mt-0.5 uppercase tracking-wide">
+                              +{matchingShifts.length - 3} Más
                             </span>
                           )}
                         </div>
+                      ) : (
+                        dayGuardias.length > 0 && (
+                          <div className="w-full flex flex-col gap-0.5 mt-1 overflow-hidden">
+                            {dayGuardias.slice(0, 2).map((g, gi) => {
+                              const shortName = g.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 2).join(' ');
+                              return (
+                                <span
+                                  key={gi}
+                                  className="text-[7.5px] font-extrabold uppercase bg-red-500/15 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 rounded px-1 py-0.5 truncate w-full block leading-tight text-center"
+                                  title={`${g.name} - Guardia`}
+                                >
+                                  {shortName}
+                                </span>
+                              );
+                            })}
+                            {dayGuardias.length > 2 && (
+                              <span className="text-[6.5px] font-black text-slate-400 dark:text-slate-500 text-center block w-full mt-0.5 uppercase tracking-wide">
+                                +{dayGuardias.length - 2} Guardias
+                              </span>
+                            )}
+                          </div>
+                        )
                       )}
                       
                       {/* Indicador de actividad si no hay guardias y no estamos en modo "Solo Guardias" */}
@@ -549,23 +602,7 @@ const Adjuntos: React.FC = () => {
                         </div>
                       </div>
 
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-extrabold uppercase tracking-wider ${
-                        shift.status === 'De Guardia'
-                          ? 'bg-red-500/10 text-red-500 border border-red-500/20'
-                          : shift.status === 'Localizado'
-                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                          : shift.status === 'Quirófano Mañana' || shift.status === 'Diferida Mañana'
-                            ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20'
-                          : shift.status === 'Quirófano Tarde' || shift.status === 'Diferida Tarde'
-                            ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
-                          : shift.status === 'Consulta'
-                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
-                          : shift.status === 'Curso/Congreso'
-                            ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
-                          : shift.status === 'Planta'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                            : 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-extrabold uppercase tracking-wider ${getShiftBadgeClasses(shift.status)}`}>
                         {shift.status}
                       </span>
                     </div>
