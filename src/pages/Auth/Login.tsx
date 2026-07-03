@@ -53,11 +53,12 @@ const Login: React.FC = () => {
         }
       } else {
         // Dynamic imports to avoid blocking build/loading
-        const { doc, getDoc } = await import('firebase/firestore');
+        const { doc, getDocFromServer } = await import('firebase/firestore');
         const { db } = await import('../../services/firebase');
         try {
+          // Usamos getDocFromServer para saltarnos el caché local y forzar lectura desde red
           const docRef = doc(db, 'readers', email.toLowerCase());
-          const docSnap = await getDoc(docRef);
+          const docSnap = await getDocFromServer(docRef);
           if (docSnap.exists() && docSnap.data().password === password) {
             const role = docSnap.data().role || 'reader';
             localStorage.setItem('session-reader', email.toLowerCase());
