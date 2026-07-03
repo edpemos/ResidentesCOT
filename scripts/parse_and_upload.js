@@ -134,15 +134,15 @@ async function parseAndUpload() {
         const row = data[r];
         if (!row || row.length === 0) continue;
 
-        // El nombre está en la columna 0 (A)
-        const name = row[0];
-        if (!name || typeof name !== 'string' || name.trim() === '' || name.includes('Total') || name.includes('Sanitarios')) {
+        // El nombre está en la columna 1 (B) debido a que la columna 0 (A) está vacía en este formato de Excel
+        const name = row[1];
+        if (!name || typeof name !== 'string' || name.trim() === '' || name.includes('Total') || name.includes('Sanitarios') || name.includes('Puestos')) {
           continue; // Saltamos filas vacías, totales o la propia leyenda
         }
 
         const sanitizedName = name.trim();
-        const identityId = row[1] ? String(row[1]).trim() : ''; // Columna 1 (B): número de identidad
-        const unit = row[3] ? String(row[3]).trim() : ''; // Columna 3 (D): unidad a la que pertenecen
+        const identityId = row[2] ? String(row[2]).trim() : ''; // Columna 2 (C): número de identidad
+        const unit = row[4] ? String(row[4]).trim() : ''; // Columna 4 (E): unidad a la que pertenecen (Especialidad)
 
         // Comprobar si tiene alguna actividad en todo el mes (si todos los días están vacíos)
         let hasAnyActivity = false;
