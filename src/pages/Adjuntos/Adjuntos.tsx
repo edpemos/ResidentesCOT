@@ -354,12 +354,7 @@ const Adjuntos: React.FC = () => {
                   // Si "Solo Guardias" está activo, sólo comprobamos coincidencias sobre médicos de guardia
                   const activeShiftsForHighlight = showOnlyGuardias ? dayGuardias : daySchedule;
                   
-                  const hasHighlightedPerson = activeShiftsForHighlight.some(s => highlightedNames.has(s.name));
-                  const hasHighlightedUnit = activeShiftsForHighlight.some(s => s.unit && selectedUnits.has(s.unit));
-                  
-                  // Se ilumina si coincide con algún filtro activo
-                  const isHighlighted = (highlightedNames.size > 0 && hasHighlightedPerson) || 
-                                        (selectedUnits.size > 0 && hasHighlightedUnit);
+
 
                   const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
                   const matchingShifts = hasActiveFilters
@@ -374,9 +369,7 @@ const Adjuntos: React.FC = () => {
                         'aspect-square p-1.5 rounded-xl border flex flex-col justify-between items-start transition-all cursor-pointer text-left relative overflow-hidden group',
                         isSelected
                           ? 'bg-teal-500/10 dark:bg-teal-500/15 border-teal-500/60 dark:border-teal-500/50 ring-1 ring-teal-500/20'
-                          : isHighlighted
-                            ? 'bg-emerald-500/10 dark:bg-emerald-500/15 border-emerald-500/60 dark:border-emerald-500/50 ring-2 ring-emerald-400 shadow-md shadow-emerald-500/10'
-                            : 'bg-slate-50/50 dark:bg-slate-950/45 hover:bg-slate-100 dark:hover:bg-slate-900 border-slate-200/50 dark:border-slate-800/40'
+                          : 'bg-slate-50/50 dark:bg-slate-950/45 hover:bg-slate-100 dark:hover:bg-slate-900 border-slate-200/50 dark:border-slate-800/40'
                       )}
                     >
                       {/* Número de día */}
@@ -384,9 +377,7 @@ const Adjuntos: React.FC = () => {
                         'text-[10px] font-black leading-none px-1 py-0.5 rounded-md',
                         isSelected 
                           ? 'bg-teal-600 text-white' 
-                          : isHighlighted
-                            ? 'bg-emerald-600 text-white'
-                            : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
                       )}>
                         {day.dayNumber}
                       </span>
@@ -442,11 +433,6 @@ const Adjuntos: React.FC = () => {
                       {/* Indicador de actividad si no hay guardias y no estamos en modo "Solo Guardias" */}
                       {!showOnlyGuardias && hasData && dayGuardias.length === 0 && (
                         <div className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-orange-400" title="Actividad planificada" />
-                      )}
-
-                      {/* Marcador superior de resaltado */}
-                      {isHighlighted && (
-                        <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-slate-900 animate-pulse" />
                       )}
                     </button>
                   );
