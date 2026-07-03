@@ -6,44 +6,53 @@ import clsx from 'clsx';
 
 const normalizeName = (name: string): string => {
   return name
-    .replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '') // Quitar Dr./Dra.
-    .replace(/./g, '')                         // Quitar puntos
-    .replace(/s+/g, ' ')                       // Colapsar múltiples espacios a uno solo
-    .trim()                                     // Recortar extremos
-    .toLowerCase()                              // A minúsculas
-    .normalize("NFD")                           // Normalizar acentos
-    .replace(/[̀-ͯ]/g, "");           // Quitar marcas de acentos
+    .replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '') 
+    .replace(/./g, '')                         
+    .replace(/s+/g, ' ')                       
+    .trim()                                     
+    .toLowerCase()                              
+    .normalize("NFD")                           
+    .replace(/[̀-ͯ]/g, "");           
 };
 
-const ADJUNTO_NAME_MAP: Record<string, string> = {
-  'manolo fer': 'Centeno',
-  'alejandro lin': 'Liñán',
-  'alejandro mon': 'Monge',
-  'antonio alg': 'Algar',
-  'antonio ort': 'Ortiz',
-  'antonio sol': 'Soler',
-  'beatriz gri': 'Grijalvo',
-  'bosco bas': 'Bosco',
-  'cesar vaz': 'César',
-  'eduardo per': 'Pereira',
-  'francisco javier bar': 'Barrionuevo',
-  'guillermo est': 'Estrada',
-  'jaime die': 'Jaime',
-  'jairo hij': 'Jairo',
-  'javier mar': 'Canario',
-  'jose m per': 'Pérez',
-  'jose ramon con': 'Pepe',
-  'laura piedad her': 'Laura',
-  'libertad cac': 'Liber',
-  'lorena ria': 'Rial',
-  'manuel cin': 'Cintado',
-  'miguel vil': 'Villa',
-  'miriam bar': 'Barcia',
-  'monica san': 'Mónica',
-  'sara gon': 'González',
-  'veronica del': 'Delgado',
-  'fernando baq': 'Baquero',
-  'silvia exp': 'Expósito'
+const mapNormalizedToFriendlyName = (normName: string, originalName: string): string => {
+  // 1. Coincidencias específicas por prefijo más largo
+  if (normName.startsWith('alejandro lin')) return 'Liñán';
+  if (normName.startsWith('alejandro mon')) return 'Monge';
+  if (normName.startsWith('antonio alg')) return 'Algar';
+  if (normName.startsWith('antonio ort')) return 'Ortiz';
+  if (normName.startsWith('antonio sol')) return 'Soler';
+  if (normName.startsWith('jose m per')) return 'Pérez';
+  if (normName.startsWith('jose ramon')) return 'Pepe';
+  if (normName.startsWith('jose maria per')) return 'Pérez';
+  if (normName.startsWith('laura piedad')) return 'Laura';
+  if (normName.startsWith('libertad cac')) return 'Liber';
+  
+  // 2. Coincidencias por el primer nombre (si es único)
+  if (normName.startsWith('manolo')) return 'Centeno';
+  if (normName.startsWith('beatriz')) return 'Grijalvo';
+  if (normName.startsWith('bosco')) return 'Bosco';
+  if (normName.startsWith('cesar')) return 'César';
+  if (normName.startsWith('eduardo')) return 'Pereira';
+  if (normName.startsWith('francisco')) return 'Barrionuevo';
+  if (normName.startsWith('guillermo')) return 'Estrada';
+  if (normName.startsWith('jaime')) return 'Jaime';
+  if (normName.startsWith('jairo')) return 'Jairo';
+  if (normName.startsWith('javier')) return 'Canario';
+  if (normName.startsWith('laura')) return 'Laura';
+  if (normName.startsWith('libertad')) return 'Liber';
+  if (normName.startsWith('lorena')) return 'Rial';
+  if (normName.startsWith('manuel')) return 'Cintado';
+  if (normName.startsWith('miguel')) return 'Villa';
+  if (normName.startsWith('miriam')) return 'Barcia';
+  if (normName.startsWith('monica')) return 'Mónica';
+  if (normName.startsWith('sara')) return 'González';
+  if (normName.startsWith('veronica')) return 'Delgado';
+  if (normName.startsWith('fernando')) return 'Baquero';
+  if (normName.startsWith('silvia')) return 'Expósito';
+
+  // Si no hay regla, devolvemos el nombre original limpio
+  return originalName.replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '').trim();
 };
 
 interface AttendingShift {
@@ -248,7 +257,7 @@ const Adjuntos: React.FC = () => {
           if (data.schedule) {
             data.schedule = data.schedule.map(s => {
               const norm = normalizeName(s.name);
-              const finalName = ADJUNTO_NAME_MAP[norm] || s.name.replace(/(Dr\.|Dra\.|DR\.|DRA\.)\s*/gi, '').trim();
+              const finalName = mapNormalizedToFriendlyName(norm, s.name);
 
               let newUnit = (s.unit || '').trim();
               
