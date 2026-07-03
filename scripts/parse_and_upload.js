@@ -188,7 +188,7 @@ async function parseAndUpload() {
           // Deducir estado general del hospital de forma exacta
           if (rawShift === 'QMU') {
             status = 'Diferida Mañana';
-          } else if (rawShift === 'QTU') {
+          } else if (rawShift === 'QMT') {
             status = 'Diferida Tarde';
           } else if (rawShift === 'CM' || rawShift === 'CT' || rawShift.startsWith('CM') || rawShift.startsWith('CT')) {
             status = 'Consulta';
@@ -205,7 +205,7 @@ async function parseAndUpload() {
           } else if (rawShift.includes('+')) {
             const parts = rawShift.split('+').map(p => p.trim());
             const hasQM = parts.some(p => p.startsWith('QM') || p === 'CM' || p === 'QMU');
-            const hasQT = parts.some(p => p.startsWith('QT') || p === 'CT' || p === 'QTU');
+            const hasQT = parts.some(p => p.startsWith('QT') || p === 'CT' || p === 'QMT');
             if (hasQM && hasQT) {
               status = 'Combinado M+T';
             } else {
