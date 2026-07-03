@@ -4,6 +4,37 @@ import { db } from '../../services/firebase';
 import { Calendar, AlertCircle, Loader2, User, X } from 'lucide-react';
 import clsx from 'clsx';
 
+const ADJUNTO_NAME_MAP: Record<string, string> = {
+  'Manolo Fer': 'Centeno',
+  'Alejandro Liñ.': 'Liñán',
+  'Alejandro Mon.': 'Monge',
+  'Antonio Alg.': 'Algar',
+  'Antonio Ort.': 'Ortiz',
+  'Antonio Sol.': 'Soler',
+  'Beatriz Gri.': 'Grijalvo',
+  'Bosco Bas.': 'Bosco',
+  'CÉSAR VÁZ': 'César',
+  'Eduardo Per.': 'Pereira',
+  'FRANCISCO JAVIER BAR.': 'Barrionuevo',
+  'GUILLERMO EST.': 'Estrada',
+  'Jaime Díe.': 'Jaime',
+  'Jairo Hij.': 'Jairo',
+  'javier mar.': 'Canario',
+  'Jose m Per.': 'Pérez',
+  'Jose Ramon Con.': 'Pepe',
+  'Laura Piedad Her.': 'Laura',
+  'Libertad Cac.': 'Liber',
+  'Lorena Ria.': 'Rial',
+  'Manuel Cin.': 'Cintado',
+  'Miguel Vil.': 'Villa',
+  'Miriam Bar.': 'Barcia',
+  'Mónica San.': 'Mónica',
+  'Sara Gon.': 'González',
+  'Verónica Del.': 'Delgado',
+  'Fernando Baq.': 'Baquero',
+  'Silvia Exp.': 'Expósito'
+};
+
 interface AttendingShift {
   name: string;
   shift: string;
@@ -202,10 +233,25 @@ const Adjuntos: React.FC = () => {
         
         querySnapshot.forEach((doc) => {
           const data = doc.data() as AttendingDayDoc;
-          // Aplicar remapeo de unidades del lado del cliente para cambios inmediatos
+          // Aplicar remapeo de nombres y unidades del lado del cliente para cambios inmediatos
           if (data.schedule) {
             data.schedule = data.schedule.map(s => {
-              const lowerName = s.name.toLowerCase();
+              const rawName = s.name.trim();
+              let finalName = rawName;
+              
+              if (ADJUNTO_NAME_MAP[rawName]) {
+                finalName = ADJUNTO_NAME_MAP[rawName];
+              } else {
+                const matchedKey = Object.keys(ADJUNTO_NAME_MAP).find(
+                  key => key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\./g, "") === 
+                         rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\./g, "")
+                );
+                if (matchedKey) {
+                  finalName = ADJUNTO_NAME_MAP[matchedKey];
+                }
+              }
+
+              const lowerName = finalName.toLowerCase();
               let newUnit = s.unit || '';
               if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
                   (lowerName.includes('jose') || lowerName.includes('josé')) && 
@@ -216,7 +262,7 @@ const Adjuntos: React.FC = () => {
               } else if (newUnit === 'Miembro Superior') {
                 newUnit = '';
               }
-              return { ...s, unit: newUnit };
+              return { ...s, name: finalName, unit: newUnit };
             });
           }
           docs[doc.id] = data;
