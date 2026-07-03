@@ -1,5 +1,6 @@
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import xlsx from 'xlsx';
-import admin from 'firebase-admin';
 import fs from 'fs';
 import path from 'path';
 
@@ -11,15 +12,15 @@ if (!serviceAccountKey) {
 }
 
 try {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(serviceAccountKey))
+  initializeApp({
+    credential: cert(JSON.parse(serviceAccountKey))
   });
 } catch (e) {
   console.error('❌ Error al inicializar Firebase Admin:', e);
   process.exit(1);
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Mapeo de códigos de celdas a estados legibles para la App
 const SHIFT_MAP = {
@@ -174,7 +175,7 @@ async function parseAndUpload() {
           year: y,
           month: m,
           day: d,
-          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: FieldValue.serverTimestamp(),
           schedule: scheduleList
         }, { merge: true });
       }
