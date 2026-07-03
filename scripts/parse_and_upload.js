@@ -23,13 +23,13 @@ const db = admin.firestore();
 
 // Mapeo de códigos de celdas a estados legibles para la App
 const SHIFT_MAP = {
+  'GLO': 'De Guardia',
   'G': 'De Guardia',
   'M': 'Mañana',
   'T': 'Tarde',
   'R': 'Refuerzo',
   'C': 'Curso/Congreso',
   'V': 'Vacaciones',
-  // Puedes añadir más códigos según se usen en tu Excel
 };
 
 async function parseAndUpload() {
@@ -67,7 +67,6 @@ async function parseAndUpload() {
       }
 
       // 1. Buscar la fila cabecera que contiene las fechas
-      // Buscamos una fila donde haya celdas con formato de fecha o texto similar a DD/MM
       let headerRowIndex = -1;
       for (let r = 0; r < data.length; r++) {
         const row = data[r];
@@ -104,7 +103,6 @@ async function parseAndUpload() {
       }
 
       // Estructura temporal para agrupar por fecha
-      // { "2026-07-01": [ { name, shift, status }, ... ] }
       const scheduleByDate = {};
 
       // 3. Procesar las filas de los médicos (todas las siguientes a la cabecera)
@@ -112,26 +110,42 @@ async function parseAndUpload() {
         const row = data[r];
         if (!row || row.length === 0) continue;
 
-        // El nombre suele estar en la primera o segunda columna no vacía
-        const name = row[0] || row[1];
+        // El nombre está en la columna 0 (A)
+        const name = row[0];
         if (!name || typeof name !== 'string' || name.trim() === '' || name.includes('Total') || name.includes('Sanitarios')) {
           continue; // Saltamos filas vacías, totales o la propia leyenda
         }
 
         const sanitizedName = name.trim();
+        const identityId = row[1] ? String(row[1]).trim() : ''; // Columna 1 (B): número de identidad
+        const unit = row[3] ? String(row[3]).trim() : ''; // Columna 3 (D): unidad a la que pertenecen
+
+        // Comprobar si tiene alguna actividad en todo el mes (si todos los días están vacíos)
+        let hasAnyActivity = false;
+        dateColumns.forEach(({ colIndex }) => {
+          const shiftVal = row[colIndex] ? String(row[colIndex]).trim() : '';
+          if (shiftVal !== '') {
+            hasAnyActivity = true;
+          }
+        });
+
+        // "Quita los duplicados que no tengan actividad": si no tiene actividad, se ignora por completo
+        if (!hasAnyActivity) {
+          console.log(`ℹ️ Ignorando a ${sanitizedName} (Sin actividad en este cuadrante).`);
+          continue;
+        }
 
         // Para cada fecha detectada en la cabecera, leemos el turno de esta fila
         dateColumns.forEach(({ colIndex, dateStr }) => {
-          // Parseamos la fecha DD/MM a AAAA-MM-DD
           const [dayStr, monthStr] = dateStr.split('/');
           const formattedDate = `${year}-${monthStr.padStart(2, '0')}-${dayStr.padStart(2, '0')}`;
 
           const rawShift = row[colIndex] ? String(row[colIndex]).trim() : '';
           
-          // Si el turno está vacío, es libre (no lo subimos para ahorrar espacio o lo marcamos como libre)
+          // Si el turno está vacío, no lo guardamos
           if (rawShift === '') return;
 
-          const status = SHIFT_MAP[rawShift] || rawShift; // Si no está en el mapa, subimos el texto original
+          const status = SHIFT_MAP[rawShift] || rawShift;
 
           if (!scheduleByDate[formattedDate]) {
             scheduleByDate[formattedDate] = [];
@@ -139,6 +153,8 @@ async function parseAndUpload() {
 
           scheduleByDate[formattedDate].push({
             name: sanitizedName,
+            identityId: identityId, // Oculto detrás de la interfaz, pero almacenado en DB
+            unit: unit,             // Unidad a la que pertenecen
             shift: rawShift,
             status: status
           });
