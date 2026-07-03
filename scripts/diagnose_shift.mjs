@@ -104,8 +104,8 @@ for (const m of matches) {
   let status = raw;
   if      (raw === 'QMU')                              status = '→ Diferida Mañana';
   else if (raw === 'QTU')                              status = '→ Diferida Tarde';
-  else if (raw === 'CM' || raw === 'CT' ||
-           raw.startsWith('CM') || raw.startsWith('CT')) status = '→ Consulta';
+  else if (raw === 'CM' || raw.startsWith('CM'))         status = '→ Consulta Mañana';
+  else if (raw === 'CT' || raw.startsWith('CT'))         status = '→ Consulta Tarde';
   else if (raw.startsWith('QM'))                       status = '→ Quirófano Mañana';
   else if (raw.startsWith('QT'))                       status = '→ Quirófano Tarde';
   else if (raw === 'PLA')                              status = '→ Planta';

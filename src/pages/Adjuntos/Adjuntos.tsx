@@ -55,7 +55,8 @@ const getShiftBadgeStyle = (status: string, shiftCode: string) => {
   else if (shiftCode === 'QTU') label = 'Diferida T';
   else if (shiftCode.startsWith('QM')) label = 'Quirof M';
   else if (shiftCode.startsWith('QT')) label = 'Quirof T';
-  else if (shiftCode === 'CM' || shiftCode === 'CT') label = 'Consulta';
+  else if (shiftCode === 'CM' || shiftCode.startsWith('CM')) label = 'Cons M';
+  else if (shiftCode === 'CT' || shiftCode.startsWith('CT')) label = 'Cons T';
   else if (shiftCode === 'PLA') label = 'Planta';
   else if (shiftCode === 'Ges') label = 'Gestión';
   else if (shiftCode === 'Cur' || shiftCode === 'C') label = 'Curso';
@@ -74,8 +75,10 @@ const getShiftBadgeStyle = (status: string, shiftCode: string) => {
     case 'Quirófano Tarde':
     case 'Diferida Tarde':
       return { bg: 'bg-[#E37400] text-white', label };         // 🟧 Naranja
-    case 'Consulta':
+    case 'Consulta Mañana':
       return { bg: 'bg-[#1A73E8] text-white', label };         // 🟦 Azul
+    case 'Consulta Tarde':
+      return { bg: 'bg-[#E37400] text-white', label };         // 🟧 Naranja (igual que Quiróf. Tarde)
     case 'Curso/Congreso':
       return { bg: 'bg-[#8430CE] text-white', label };         // 🟪 Morado
     case 'Planta':
@@ -102,8 +105,10 @@ const getShiftBadgeClasses = (status: string) => {
     case 'Quirófano Tarde':
     case 'Diferida Tarde':
       return 'bg-[#E37400]/15 text-[#E37400] border border-[#E37400]/30';    // 🟧 Naranja
-    case 'Consulta':
+    case 'Consulta Mañana':
       return 'bg-[#1A73E8]/15 text-[#1A73E8] border border-[#1A73E8]/30';   // 🟦 Azul
+    case 'Consulta Tarde':
+      return 'bg-[#E37400]/15 text-[#E37400] border border-[#E37400]/30';   // 🟧 Naranja
     case 'Curso/Congreso':
       return 'bg-[#8430CE]/15 text-[#8430CE] border border-[#8430CE]/30';   // 🟪 Morado
     case 'Planta':

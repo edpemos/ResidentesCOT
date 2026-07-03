@@ -190,8 +190,10 @@ async function parseAndUpload() {
             status = 'Diferida Mañana';
           } else if (rawShift === 'QTU') {
             status = 'Diferida Tarde';
-          } else if (rawShift === 'CM' || rawShift === 'CT' || rawShift.startsWith('CM') || rawShift.startsWith('CT')) {
-            status = 'Consulta';
+          } else if (rawShift === 'CM' || rawShift.startsWith('CM')) {
+            status = 'Consulta Mañana';
+          } else if (rawShift === 'CT' || rawShift.startsWith('CT')) {
+            status = 'Consulta Tarde';
           } else if (rawShift.startsWith('QM')) {
             status = 'Quirófano Mañana';
           } else if (rawShift.startsWith('QT')) {
