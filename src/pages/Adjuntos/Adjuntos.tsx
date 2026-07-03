@@ -253,7 +253,7 @@ const Adjuntos: React.FC = () => {
 
                   const hasData = !!scheduleData[day.dateKey];
                   const daySchedule = scheduleData[day.dateKey]?.schedule || [];
-                  const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GLO' || s.shift === 'GPF');
+                  const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
                   const isSelected = day.dateKey === currentDate;
 
                   // Comprobar si algún profesional asignado este día está en la lista de resaltados
@@ -414,11 +414,13 @@ const Adjuntos: React.FC = () => {
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-extrabold uppercase tracking-wider ${
                         shift.status === 'De Guardia'
                           ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          : shift.status === 'Guardia Localizada'
+                            ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20'
                           : shift.status === 'Tarde'
                             ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
-                            : shift.status === 'Vacaciones'
-                              ? 'bg-teal-500/10 text-teal-500 border border-teal-500/20'
-                              : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                          : shift.status === 'Vacaciones'
+                            ? 'bg-teal-500/10 text-teal-500 border border-teal-500/20'
+                            : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                       }`}>
                         {shift.status}
                       </span>
