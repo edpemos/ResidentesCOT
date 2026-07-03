@@ -47,7 +47,7 @@ const db = getFirestore();
 
 // Mapeo de códigos de celdas a estados legibles para la App
 const SHIFT_MAP = {
-  'GLO': 'Guardia Localizada',
+  'GLO': 'Localizado',
   'GPF': 'De Guardia',
   'G': 'De Guardia',
   'M': 'Mañana',
@@ -172,18 +172,31 @@ async function parseAndUpload() {
 
           let status = SHIFT_MAP[rawShift] || rawShift;
           
-          // Deducir estado general a partir de prefijos comunes del hospital
-          if (status === rawShift) {
-            if (rawShift.startsWith('QM') || rawShift === 'CM' || rawShift === 'CMU') {
-              status = 'Mañana';
-            } else if (rawShift.startsWith('QT') || rawShift === 'CT' || rawShift === 'CTU') {
-              status = 'Tarde';
-            } else if (rawShift === 'PLA') {
-              status = 'Planta';
-            } else if (rawShift === 'Ges') {
-              status = 'Gestión';
-            } else if (rawShift === 'Cur') {
-              status = 'Curso/Congreso';
+          // Deducir estado general del hospital de forma exacta
+          if (rawShift === 'QMU') {
+            status = 'Diferida Mañana';
+          } else if (rawShift === 'QTU') {
+            status = 'Diferida Tarde';
+          } else if (rawShift === 'CM' || rawShift === 'CT' || rawShift.startsWith('CM') || rawShift.startsWith('CT')) {
+            status = 'Consulta';
+          } else if (rawShift.startsWith('QM')) {
+            status = 'Quirófano Mañana';
+          } else if (rawShift.startsWith('QT')) {
+            status = 'Quirófano Tarde';
+          } else if (rawShift === 'PLA') {
+            status = 'Planta';
+          } else if (rawShift === 'Ges') {
+            status = 'Gestión';
+          } else if (rawShift === 'Cur' || rawShift === 'C') {
+            status = 'Curso/Congreso';
+          } else if (rawShift.includes('+')) {
+            const parts = rawShift.split('+').map(p => p.trim());
+            const hasQM = parts.some(p => p.startsWith('QM') || p === 'CM' || p === 'QMU');
+            const hasQT = parts.some(p => p.startsWith('QT') || p === 'CT' || p === 'QTU');
+            if (hasQM && hasQT) {
+              status = 'Combinado M+T';
+            } else {
+              status = 'Combinado';
             }
           }
 
