@@ -52,7 +52,7 @@ const getShiftBadgeStyle = (status: string, shiftCode: string) => {
   let label = shiftCode;
 
   if (shiftCode === 'QMU') label = 'Diferida M';
-  else if (shiftCode === 'QMT') label = 'Diferida T';
+  else if (shiftCode === 'QTU') label = 'Diferida T';
   else if (shiftCode.startsWith('QM')) label = 'Quirof M';
   else if (shiftCode.startsWith('QT')) label = 'Quirof T';
   else if (shiftCode === 'CM' || shiftCode === 'CT') label = 'Consulta';
@@ -313,7 +313,7 @@ const Adjuntos: React.FC = () => {
         s.status === 'Diferida Mañana' ||
         s.shift === 'QMU' ||
         s.status === 'Diferida Tarde' ||
-        s.shift === 'QMT'
+        s.shift === 'QTU'
       );
     }
 
@@ -623,7 +623,7 @@ const Adjuntos: React.FC = () => {
                       s.status === 'De Guardia' || s.shift === 'GPF' ||
                       s.status === 'Planta'     || s.shift === 'PLA' ||
                       s.status === 'Diferida Mañana' || s.shift === 'QMU' ||
-                      s.status === 'Diferida Tarde'  || s.shift === 'QMT'
+                      s.status === 'Diferida Tarde'  || s.shift === 'QTU'
                     );
                   }
                   

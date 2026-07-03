@@ -103,7 +103,7 @@ for (const m of matches) {
   const raw = m.trimmed;
   let status = raw;
   if      (raw === 'QMU')                              status = '→ Diferida Mañana';
-  else if (raw === 'QMT')                              status = '→ Diferida Tarde';
+  else if (raw === 'QTU')                              status = '→ Diferida Tarde';
   else if (raw === 'CM' || raw === 'CT' ||
            raw.startsWith('CM') || raw.startsWith('CT')) status = '→ Consulta';
   else if (raw.startsWith('QM'))                       status = '→ Quirófano Mañana';
