@@ -632,7 +632,7 @@ const Adjuntos: React.FC = () => {
               <div className="grid grid-cols-7 gap-1.5">
                 {calendarDays.map((day, idx) => {
                   if (!day) {
-                    return <div key={`empty-${idx}`} className="aspect-[4/5] bg-slate-100/30 dark:bg-slate-900/10 rounded-xl border border-transparent opacity-40" />;
+                    return <div key={`empty-${idx}`} className="h-[6.5rem] bg-slate-100/30 dark:bg-slate-900/10 rounded-xl border border-transparent opacity-40" />;
                   }
 
                   const hasData = !!scheduleData[day.dateKey];
