@@ -4,35 +4,46 @@ import { db } from '../../services/firebase';
 import { Calendar, AlertCircle, Loader2, User, X, Download } from 'lucide-react';
 import clsx from 'clsx';
 
+const normalizeName = (name: string): string => {
+  return name
+    .replace(/(Dr.|Dra.|DR.|DRA.)s*/gi, '') // Quitar Dr./Dra.
+    .replace(/./g, '')                         // Quitar puntos
+    .replace(/s+/g, ' ')                       // Colapsar múltiples espacios a uno solo
+    .trim()                                     // Recortar extremos
+    .toLowerCase()                              // A minúsculas
+    .normalize("NFD")                           // Normalizar acentos
+    .replace(/[̀-ͯ]/g, "");           // Quitar marcas de acentos
+};
+
 const ADJUNTO_NAME_MAP: Record<string, string> = {
-  'Manolo Fer': 'Centeno',
-  'Alejandro Liñ.': 'Liñán',
-  'Alejandro Mon.': 'Monge',
-  'Antonio Alg.': 'Algar',
-  'Antonio Ort.': 'Ortiz',
-  'Antonio Sol.': 'Soler',
-  'Beatriz Gri.': 'Grijalvo',
-  'Bosco Bas.': 'Bosco',
-  'CÉSAR VÁZ': 'César',
-  'Eduardo Per.': 'Pereira',
-  'FRANCISCO JAVIER BAR.': 'Barrionuevo',
-  'GUILLERMO EST.': 'Estrada',
-  'Jaime Díe.': 'Jaime',
-  'Jairo Hij.': 'Jairo',
-  'javier mar.': 'Canario',
-  'Jose m Per.': 'Pérez',
-  'Jose Ramon Con.': 'Pepe',
-  'Laura Piedad Her.': 'Laura',
-  'Libertad Cac.': 'Liber',
-  'Lorena Ria.': 'Rial',
-  'Manuel Cin.': 'Cintado',
-  'Miguel Vil.': 'Villa',
-  'Miriam Bar.': 'Barcia',
-  'Mónica San.': 'Mónica',
-  'Sara Gon.': 'González',
-  'Verónica Del.': 'Delgado',
-  'Fernando Baq.': 'Baquero',
-  'Silvia Exp.': 'Expósito'
+  'manolo fer': 'Centeno',
+  'alejandro lin': 'Liñán',
+  'alejandro mon': 'Monge',
+  'antonio alg': 'Algar',
+  'antonio ort': 'Ortiz',
+  'antonio sol': 'Soler',
+  'beatriz gri': 'Grijalvo',
+  'bosco bas': 'Bosco',
+  'cesar vaz': 'César',
+  'eduardo per': 'Pereira',
+  'francisco javier bar': 'Barrionuevo',
+  'guillermo est': 'Estrada',
+  'jaime die': 'Jaime',
+  'jairo hij': 'Jairo',
+  'javier mar': 'Canario',
+  'jose m per': 'Pérez',
+  'jose ramon con': 'Pepe',
+  'laura piedad her': 'Laura',
+  'libertad cac': 'Liber',
+  'lorena ria': 'Rial',
+  'manuel cin': 'Cintado',
+  'miguel vil': 'Villa',
+  'miriam bar': 'Barcia',
+  'monica san': 'Mónica',
+  'sara gon': 'González',
+  'veronica del': 'Delgado',
+  'fernando baq': 'Baquero',
+  'silvia exp': 'Expósito'
 };
 
 interface AttendingShift {
@@ -236,20 +247,8 @@ const Adjuntos: React.FC = () => {
           // Aplicar remapeo de nombres y unidades del lado del cliente para cambios inmediatos
           if (data.schedule) {
             data.schedule = data.schedule.map(s => {
-              const rawName = s.name.trim();
-              let finalName = rawName;
-              
-              if (ADJUNTO_NAME_MAP[rawName]) {
-                finalName = ADJUNTO_NAME_MAP[rawName];
-              } else {
-                const matchedKey = Object.keys(ADJUNTO_NAME_MAP).find(
-                  key => key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\./g, "") === 
-                         rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\./g, "")
-                );
-                if (matchedKey) {
-                  finalName = ADJUNTO_NAME_MAP[matchedKey];
-                }
-              }
+              const norm = normalizeName(s.name);
+              const finalName = ADJUNTO_NAME_MAP[norm] || s.name.replace(/(Dr\.|Dra\.|DR\.|DRA\.)\s*/gi, '').trim();
 
               let newUnit = (s.unit || '').trim();
               
