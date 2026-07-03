@@ -49,8 +49,12 @@ const Adjuntos: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<Record<string, AttendingDayDoc>>({});
   
-  // Estado para los médicos seleccionados que saldrán resaltados en el calendario
+  // Estados para filtros de resaltado
   const [highlightedNames, setHighlightedNames] = useState<Set<string>>(new Set());
+  const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
+
+  // Estado para ver solo guardias
+  const [showOnlyGuardias, setShowOnlyGuardias] = useState(false);
 
   // Cargar datos de Firestore para el mes seleccionado
   useEffect(() => {
@@ -92,8 +96,19 @@ const Adjuntos: React.FC = () => {
     return Array.from(names).sort();
   }, [scheduleData]);
 
+  // Extraer todas las especialidades / unidades únicas de este mes
+  const uniqueUnits = useMemo(() => {
+    const units = new Set<string>();
+    Object.values(scheduleData).forEach(day => {
+      day.schedule.forEach(s => {
+        if (s.unit) units.add(s.unit);
+      });
+    });
+    return Array.from(units).sort();
+  }, [scheduleData]);
+
   // Alternar el resaltado de un profesional
-  const toggleHighlight = (name: string) => {
+  const toggleNameHighlight = (name: string) => {
     setHighlightedNames(prev => {
       const next = new Set(prev);
       if (next.has(name)) {
@@ -105,6 +120,25 @@ const Adjuntos: React.FC = () => {
     });
   };
 
+  // Alternar el resaltado de una especialidad/unidad
+  const toggleUnitHighlight = (unit: string) => {
+    setSelectedUnits(prev => {
+      const next = new Set(prev);
+      if (next.has(unit)) {
+        next.delete(unit);
+      } else {
+        next.add(unit);
+      }
+      return next;
+    });
+  };
+
+  // Limpiar todos los filtros activos
+  const clearAllFilters = () => {
+    setHighlightedNames(new Set());
+    setSelectedUnits(new Set());
+  };
+
   // Navegación de meses
   const handlePrevMonth = () => {
     setCurrentYearMonth(prev => {
@@ -113,7 +147,7 @@ const Adjuntos: React.FC = () => {
       }
       return { year: prev.year, month: prev.month - 1 };
     });
-    setHighlightedNames(new Set()); // Limpiamos resaltados al cambiar de mes
+    clearAllFilters(); // Limpiamos filtros al cambiar de mes
   };
 
   const handleNextMonth = () => {
@@ -123,7 +157,7 @@ const Adjuntos: React.FC = () => {
       }
       return { year: prev.year, month: prev.month + 1 };
     });
-    setHighlightedNames(new Set()); // Limpiamos resaltados al cambiar de mes
+    clearAllFilters(); // Limpiamos filtros al cambiar de mes
   };
 
   // Obtener los días del mes actual para renderizar el calendario cuadrícula
@@ -157,10 +191,14 @@ const Adjuntos: React.FC = () => {
     return days;
   }, [currentYearMonth]);
 
-  // Planificación del día seleccionado actualmente
+  // Planificación del día seleccionado actualmente, filtrada si "Solo Guardias" está activo
   const selectedDayPlan = useMemo(() => {
-    return scheduleData[currentDate]?.schedule || [];
-  }, [scheduleData, currentDate]);
+    const rawPlan = scheduleData[currentDate]?.schedule || [];
+    if (showOnlyGuardias) {
+      return rawPlan.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
+    }
+    return rawPlan;
+  }, [scheduleData, currentDate, showOnlyGuardias]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -180,7 +218,7 @@ const Adjuntos: React.FC = () => {
               Planificación de Adjuntos
             </h2>
             <p className="text-slate-350 text-sm leading-relaxed">
-              Consulta el cuadrante completo de cirujanos adjuntos del Servicio de COT. Utiliza la lista inferior para resaltar las guardias o actividades de médicos específicos.
+              Consulta el cuadrante de cirujanos adjuntos del Servicio de COT. Utiliza los filtros inferiores para resaltar especialidades médicas específicas.
             </p>
           </div>
           <div className="shrink-0 flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-950 border border-teal-900/40 text-emerald-400 shadow-xl shadow-teal-950/50">
@@ -195,7 +233,7 @@ const Adjuntos: React.FC = () => {
         <div className="lg:col-span-8 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-5 shadow-xl space-y-6">
           
           {/* Header del Calendario */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/60">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-teal-500" />
               <h3 className="text-base font-bold text-slate-850 dark:text-slate-100 font-display">
@@ -203,27 +241,45 @@ const Adjuntos: React.FC = () => {
               </h3>
             </div>
             
-            {/* Navegación del mes */}
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-              <button
-                onClick={handlePrevMonth}
-                aria-label="Mes anterior"
-                className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-teal-500 dark:hover:text-teal-400 transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+            {/* Controles: Solo Guardias + Navegación */}
+            <div className="flex items-center gap-3 self-end sm:self-auto">
               
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 px-2 min-w-[100px] text-center">
-                {MONTHS_SPANISH[currentYearMonth.month]} {currentYearMonth.year}
-              </span>
-
+              {/* Botón Switch: Solo Guardias */}
               <button
-                onClick={handleNextMonth}
-                aria-label="Mes siguiente"
-                className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-teal-500 dark:hover:text-teal-400 transition-colors cursor-pointer"
+                onClick={() => setShowOnlyGuardias(!showOnlyGuardias)}
+                className={clsx(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer select-none',
+                  showOnlyGuardias
+                    ? 'bg-red-500 text-white border-red-600 shadow-md shadow-red-500/10'
+                    : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
+                )}
               >
-                <ChevronRight className="w-4 h-4" />
+                <span className={clsx('w-2 h-2 rounded-full', showOnlyGuardias ? 'bg-white animate-pulse' : 'bg-red-500')} />
+                Ver Solo Guardias
               </button>
+
+              {/* Navegación del mes */}
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                <button
+                  onClick={handlePrevMonth}
+                  aria-label="Mes anterior"
+                  className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-teal-500 dark:hover:text-teal-400 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 px-2 min-w-[100px] text-center">
+                  {MONTHS_SPANISH[currentYearMonth.month]} {currentYearMonth.year}
+                </span>
+
+                <button
+                  onClick={handleNextMonth}
+                  aria-label="Mes siguiente"
+                  className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-teal-500 dark:hover:text-teal-400 transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -253,12 +309,21 @@ const Adjuntos: React.FC = () => {
 
                   const hasData = !!scheduleData[day.dateKey];
                   const daySchedule = scheduleData[day.dateKey]?.schedule || [];
+                  
+                  // Médicos de guardia física (GPF)
                   const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
                   const isSelected = day.dateKey === currentDate;
 
-                  // Comprobar si algún profesional asignado este día está en la lista de resaltados
-                  const hasHighlightedPerson = daySchedule.some(s => highlightedNames.has(s.name));
-                  const isHighlighted = highlightedNames.size > 0 && hasHighlightedPerson;
+                  // Lógica de filtrado/resaltado personalizado
+                  // Si "Solo Guardias" está activo, sólo comprobamos coincidencias sobre médicos de guardia
+                  const activeShiftsForHighlight = showOnlyGuardias ? dayGuardias : daySchedule;
+                  
+                  const hasHighlightedPerson = activeShiftsForHighlight.some(s => highlightedNames.has(s.name));
+                  const hasHighlightedUnit = activeShiftsForHighlight.some(s => s.unit && selectedUnits.has(s.unit));
+                  
+                  // Se ilumina si coincide con algún filtro activo
+                  const isHighlighted = (highlightedNames.size > 0 && hasHighlightedPerson) || 
+                                        (selectedUnits.size > 0 && hasHighlightedUnit);
 
                   return (
                     <button
@@ -285,7 +350,7 @@ const Adjuntos: React.FC = () => {
                         {day.dayNumber}
                       </span>
 
-                      {/* Lista de médicos de guardia (GLO) */}
+                      {/* Lista de médicos de guardia (GPF) */}
                       {dayGuardias.length > 0 && (
                         <div className="w-full flex flex-col gap-0.5 mt-1 overflow-hidden">
                           {dayGuardias.slice(0, 2).map((g, gi) => {
@@ -308,8 +373,8 @@ const Adjuntos: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Indicador de tarde u otra actividad si no hay guardias */}
-                      {hasData && dayGuardias.length === 0 && (
+                      {/* Indicador de actividad si no hay guardias y no estamos en modo "Solo Guardias" */}
+                      {!showOnlyGuardias && hasData && dayGuardias.length === 0 && (
                         <div className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-orange-400" title="Actividad planificada" />
                       )}
 
@@ -322,39 +387,87 @@ const Adjuntos: React.FC = () => {
                 })}
               </div>
 
-              {/* LISTADO DE SELECCIÓN/RESALTADO DE ADJUNTOS */}
-              <div className="pt-5 border-t border-slate-100 dark:border-slate-800/60 space-y-3">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-teal-500" />
-                    Resaltar Profesionales en Calendario
-                  </h4>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    Haz clic en uno o varios adjuntos de la lista para iluminar con un borde verde los días en los que tienen actividad programada en el cuadrante.
-                  </p>
+              {/* SECCIÓN DE FILTROS PERSONALIZADOS */}
+              <div className="pt-5 border-t border-slate-100 dark:border-slate-800/60 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5 font-display">
+                      <Users className="w-4 h-4 text-teal-500" />
+                      Resaltar en Calendario
+                    </h4>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      Filtra por Unidad o por Médico para iluminar sus actividades. Si activas "Ver Solo Guardias" arriba, se resaltarán únicamente sus días de guardia.
+                    </p>
+                  </div>
+                  
+                  {/* Botón de limpiar filtros */}
+                  {(highlightedNames.size > 0 || selectedUnits.size > 0) && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="px-2.5 py-1 rounded-lg text-[9.5px] font-black uppercase text-red-500 hover:bg-red-500/10 transition-all cursor-pointer border border-transparent hover:border-red-500/20"
+                    >
+                      Limpiar Filtros
+                    </button>
+                  )}
                 </div>
                 
-                {uniqueNames.length === 0 ? (
+                {uniqueNames.length === 0 && uniqueUnits.length === 0 ? (
                   <p className="text-xs text-slate-400 dark:text-slate-550 italic">No hay profesionales disponibles en este mes.</p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto pr-1">
-                    {uniqueNames.map(name => {
-                      const isHighlighted = highlightedNames.has(name);
-                      return (
-                        <button
-                          key={name}
-                          onClick={() => toggleHighlight(name)}
-                          className={clsx(
-                            'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer',
-                            isHighlighted
-                              ? 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-500/10'
-                              : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
-                          )}
-                        >
-                          {name}
-                        </button>
-                      );
-                    })}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-1">
+                    
+                    {/* Filtro por Especialidades / Unidades (5 columnas) */}
+                    <div className="md:col-span-5 space-y-2">
+                      <h5 className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-l-2 border-teal-500 pl-2">
+                        Por Unidad / Especialidad
+                      </h5>
+                      <div className="flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                        {uniqueUnits.map(unit => {
+                          const isHighlighted = selectedUnits.has(unit);
+                          return (
+                            <button
+                              key={unit}
+                              onClick={() => toggleUnitHighlight(unit)}
+                              className={clsx(
+                                'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer select-none',
+                                isHighlighted
+                                  ? 'bg-teal-600 text-white border-teal-700 shadow-md shadow-teal-600/10 font-bold'
+                                  : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
+                              )}
+                            >
+                              {unit}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Filtro por Médicos individuales (7 columnas) */}
+                    <div className="md:col-span-7 space-y-2">
+                      <h5 className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-l-2 border-emerald-500 pl-2">
+                        Por Médico Adjunto
+                      </h5>
+                      <div className="flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                        {uniqueNames.map(name => {
+                          const isHighlighted = highlightedNames.has(name);
+                          return (
+                            <button
+                              key={name}
+                              onClick={() => toggleNameHighlight(name)}
+                              className={clsx(
+                                'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer select-none',
+                                isHighlighted
+                                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-md shadow-emerald-600/10 font-bold'
+                                  : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-900'
+                              )}
+                            >
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                   </div>
                 )}
               </div>
@@ -365,16 +478,24 @@ const Adjuntos: React.FC = () => {
 
         {/* LADO DERECHO: Detalle del Día Seleccionado (4 columnas) */}
         <div className="lg:col-span-4 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-5 shadow-xl space-y-4">
-          <div>
-            <span className="text-[9px] font-black uppercase text-teal-500 tracking-wider">Fecha Seleccionada</span>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-0.5">
-              {getFriendlyDate(currentDate)}
-            </h4>
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[9px] font-black uppercase text-teal-500 tracking-wider">Fecha Seleccionada</span>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-0.5 font-display">
+                {getFriendlyDate(currentDate)}
+              </h4>
+            </div>
+            
+            {showOnlyGuardias && (
+              <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-wider animate-pulse">
+                Modo Guardias
+              </span>
+            )}
           </div>
 
           <div className="border-t border-slate-100 dark:border-slate-800/60 pt-4 space-y-3">
             <h5 className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">
-              Planificación Detallada
+              {showOnlyGuardias ? 'Guardias del Día' : 'Planificación Detallada'}
             </h5>
 
             {loading ? (
@@ -384,9 +505,13 @@ const Adjuntos: React.FC = () => {
             ) : selectedDayPlan.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-12 px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
                 <AlertCircle className="w-8 h-8 text-slate-350 dark:text-slate-650" />
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-2">No hay guardias o turnos</p>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-2">
+                  {showOnlyGuardias ? 'No hay guardias físicas' : 'No hay guardias o turnos'}
+                </p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-relaxed">
-                  No se han registrado asignaciones para el personal adjunto en esta fecha o el cuadrante no está publicado aún.
+                  {showOnlyGuardias 
+                    ? 'No hay especialistas de guardia física (GPF) programados para esta fecha.'
+                    : 'No se han registrado asignaciones para el personal adjunto en esta fecha o el cuadrante no está publicado aún.'}
                 </p>
               </div>
             ) : (
