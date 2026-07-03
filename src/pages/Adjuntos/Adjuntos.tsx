@@ -35,68 +35,81 @@ const getFriendlyDate = (dateStr: string) => {
   return `${days[dateObj.getDay()]}, ${d} de ${MONTHS_SPANISH[m - 1]} de ${y}`;
 };
 
-// Mapeador exacto de colores y etiquetas según la captura y peticiones del usuario
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  PALETA DE COLORES (Google Drive) — Reglas del servicio:
+//  🟥 Guardia GPF       → Rojo      #D93025
+//  🌸 Localizado GLO    → Rosa      #E52592
+//  🟨 Quiróf. Mañana / Diferida Mañana → Amarillo #F9AB00
+//  🟧 Quiróf. Tarde  / Diferida Tarde  → Naranja  #E37400
+//  🟦 Consulta          → Azul      #1A73E8
+//  🟪 Curso/Congreso    → Morado    #8430CE
+//  🟩 Planta            → Verde     #0F9D58
+//  ⬜ Gestión / otros   → Gris      #5F6368
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Badges sólidos — cuadrícula del calendario
 const getShiftBadgeStyle = (status: string, shiftCode: string) => {
   let label = shiftCode;
 
-  // Limpiar etiquetas para hacerlas compactas como en la captura
   if (shiftCode === 'QMU') label = 'Diferida M';
   else if (shiftCode === 'QTU') label = 'Diferida T';
   else if (shiftCode.startsWith('QM')) label = 'Quirof M';
   else if (shiftCode.startsWith('QT')) label = 'Quirof T';
-  else if (shiftCode === 'CM') label = 'Cons M';
-  else if (shiftCode === 'CT') label = 'Cons T';
+  else if (shiftCode === 'CM' || shiftCode === 'CT') label = 'Consulta';
   else if (shiftCode === 'PLA') label = 'Planta';
-  else if (shiftCode === 'Ges') label = 'Gestion';
-  else if (shiftCode === 'Cur') label = 'Curso';
+  else if (shiftCode === 'Ges') label = 'Gestión';
+  else if (shiftCode === 'Cur' || shiftCode === 'C') label = 'Curso';
   else if (shiftCode === 'GLO') label = 'Localiz';
   else if (shiftCode === 'GPF' || shiftCode === 'G') label = 'Guardia';
   else if (shiftCode === 'S' || shiftCode === 'Saliente') label = 'Saliente';
 
   switch (status) {
     case 'De Guardia':
-      return { bg: 'bg-[#b91c1c] text-white border-transparent', label }; // Rojo Guardia
+      return { bg: 'bg-[#D93025] text-white', label };         // 🟥 Rojo
     case 'Localizado':
-      return { bg: 'bg-[#6d28d9] text-white border-transparent', label }; // Morado/Violeta Localiz
+      return { bg: 'bg-[#E52592] text-white', label };         // 🌸 Rosa
     case 'Quirófano Mañana':
     case 'Diferida Mañana':
-      return { bg: 'bg-[#0f172a] text-white border-transparent', label }; // Azul Oscuro Quirof M
+      return { bg: 'bg-[#F9AB00] text-slate-900', label };     // 🟨 Amarillo
     case 'Quirófano Tarde':
     case 'Diferida Tarde':
-      return { bg: 'bg-[#2563eb] text-white border-transparent', label }; // Azul Quirof T
+      return { bg: 'bg-[#E37400] text-white', label };         // 🟧 Naranja
     case 'Consulta':
-      return { bg: 'bg-[#047857] text-white border-transparent', label }; // Verde Cons M / Cons T
+      return { bg: 'bg-[#1A73E8] text-white', label };         // 🟦 Azul
     case 'Curso/Congreso':
-      return { bg: 'bg-[#7c3aed] text-white border-transparent', label }; // Morado Curso
+      return { bg: 'bg-[#8430CE] text-white', label };         // 🟪 Morado
     case 'Planta':
-      return { bg: 'bg-[#475569] text-white border-transparent', label }; // Gris Diferida/Planta
+      return { bg: 'bg-[#0F9D58] text-white', label };         // 🟩 Verde
     case 'Gestión':
-      return { bg: 'bg-[#b45309] text-white border-transparent', label }; // Marrón/Oro Gestion
+      return { bg: 'bg-[#5F6368] text-white', label };         // ⬜ Gris
     case 'Saliente':
-      return { bg: 'bg-[#f97316] text-white border-transparent', label }; // Naranja Saliente
+      return { bg: 'bg-[#E37400] text-white', label };         // Saliente → naranja oscuro
     default:
-      return { bg: 'bg-[#64748b] text-white border-transparent', label }; // Gris general
+      return { bg: 'bg-[#5F6368] text-white', label };         // ⬜ Gris
   }
 };
 
+// Badges con tinte — modal de detalle de día
 const getShiftBadgeClasses = (status: string) => {
   switch (status) {
     case 'De Guardia':
-      return 'bg-red-500/10 text-red-500 border border-red-500/20';
+      return 'bg-[#D93025]/15 text-[#D93025] border border-[#D93025]/30';    // 🟥 Rojo
     case 'Localizado':
-      return 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
+      return 'bg-[#E52592]/15 text-[#E52592] border border-[#E52592]/30';    // 🌸 Rosa
     case 'Quirófano Mañana':
     case 'Diferida Mañana':
-      return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-450 border border-yellow-500/20';
+      return 'bg-[#F9AB00]/20 text-[#b87800] dark:text-[#fbbf24] border border-[#F9AB00]/35'; // 🟨 Amarillo
     case 'Quirófano Tarde':
     case 'Diferida Tarde':
-      return 'bg-orange-500/10 text-orange-550 dark:text-orange-400 border border-orange-500/20';
+      return 'bg-[#E37400]/15 text-[#E37400] border border-[#E37400]/30';    // 🟧 Naranja
     case 'Consulta':
-      return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+      return 'bg-[#1A73E8]/15 text-[#1A73E8] border border-[#1A73E8]/30';   // 🟦 Azul
     case 'Curso/Congreso':
-      return 'bg-purple-500/10 text-purple-500 border border-purple-500/20';
+      return 'bg-[#8430CE]/15 text-[#8430CE] border border-[#8430CE]/30';   // 🟪 Morado
     case 'Planta':
-      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20';
+      return 'bg-[#0F9D58]/15 text-[#0F9D58] border border-[#0F9D58]/30';   // 🟩 Verde
+    case 'Gestión':
+      return 'bg-[#5F6368]/10 text-[#5F6368] border border-[#5F6368]/25';   // ⬜ Gris
     default:
       return 'bg-slate-500/10 text-slate-500 border border-slate-500/20';
   }
@@ -301,7 +314,7 @@ const Adjuntos: React.FC = () => {
   }, [scheduleData, currentDate, showOnlyGuardias, highlightedNames, selectedUnits]);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500 max-w-[1400px] mx-auto pb-10">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full max-w-[98%] xl:max-w-[96%] mx-auto px-2 sm:px-4 pb-10">
       
       {/* Banner de Bienvenida */}
       <div className="relative overflow-hidden bg-gradient-to-r from-teal-900 via-teal-950 to-slate-900 border border-teal-900/35 rounded-3xl p-5 shadow-xl">
@@ -567,9 +580,18 @@ const Adjuntos: React.FC = () => {
                   const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
                   const activeShifts = showOnlyGuardias ? dayGuardias : daySchedule;
                   
-                  const matchingShifts = hasActiveFilters
+                  const filteredShifts = hasActiveFilters
                     ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
                     : activeShifts;
+
+                  // Priorizar las guardias (De Guardia / GPF) para que siempre salgan arriba del todo en la celda
+                  const matchingShifts = [...filteredShifts].sort((a, b) => {
+                    const aIsGuardia = a.status === 'De Guardia' || a.shift === 'GPF';
+                    const bIsGuardia = b.status === 'De Guardia' || b.shift === 'GPF';
+                    if (aIsGuardia && !bIsGuardia) return -1;
+                    if (!aIsGuardia && bIsGuardia) return 1;
+                    return 0;
+                  });
 
                   const isCellEmpty = matchingShifts.length === 0;
 
