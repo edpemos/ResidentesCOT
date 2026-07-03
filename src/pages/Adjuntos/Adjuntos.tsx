@@ -253,7 +253,7 @@ const Adjuntos: React.FC = () => {
 
                   const hasData = !!scheduleData[day.dateKey];
                   const daySchedule = scheduleData[day.dateKey]?.schedule || [];
-                  const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GLO');
+                  const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GLO' || s.shift === 'GPF');
                   const isSelected = day.dateKey === currentDate;
 
                   // Comprobar si algún profesional asignado este día está en la lista de resaltados

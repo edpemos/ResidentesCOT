@@ -48,6 +48,7 @@ const db = getFirestore();
 // Mapeo de códigos de celdas a estados legibles para la App
 const SHIFT_MAP = {
   'GLO': 'De Guardia',
+  'GPF': 'De Guardia',
   'G': 'De Guardia',
   'M': 'Mañana',
   'T': 'Tarde',
