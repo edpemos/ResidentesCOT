@@ -910,7 +910,7 @@ const Adjuntos: React.FC = () => {
             </div>
 
             {/* VISTA DESKTOP (Nativa CSS - visible en 768px o más, oculta en móvil) */}
-            <div className="hidden md:flex p-3 w-full flex-1 flex flex-col justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
+            <div className="hidden md:flex md:flex-col p-3 w-full flex-1 justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
             <div className="w-full flex flex-col flex-1 min-h-0">
               
               {/* Cabecera de Días (L, M, X, J, V, S, D) */}
