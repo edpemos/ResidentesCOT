@@ -242,6 +242,17 @@ const Adjuntos: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<Record<string, AttendingDayDoc>>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const now = new Date();
   
   // Estados para filtros de resaltado
@@ -779,7 +790,136 @@ const Adjuntos: React.FC = () => {
             <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
             <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest animate-pulse">Cargando Cuadrante...</p>
           </div>
+        ) : isMobile ? (
+          /* VISTA MÓVIL (Carrusel Semanal + Lista de Tarjetas del Día Seleccionado) */
+          <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
+            {/* Carrusel Deslizable Horizontalmente */}
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20">
+              <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-none snap-x snap-mandatory">
+                {calendarDays.filter(Boolean).map((day) => {
+                  const dayObj = day!;
+                  const isSelected = dayObj.dateKey === currentDate;
+                  const isToday = dayObj.dateKey === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                  
+                  // Calcular día de la semana para la cabecera
+                  const dateObj = new Date(currentYearMonth.year, currentYearMonth.month, dayObj.dayNumber);
+                  const dayOfWeekIdx = (dateObj.getDay() + 6) % 7; // Convertir domingo=0 a lunes=0, domingo=6
+                  const dayOfWeekName = DAYS_SHORT[dayOfWeekIdx];
+                  const isWeekend = dayOfWeekIdx === 5 || dayOfWeekIdx === 6;
+                  
+                  return (
+                    <button
+                      key={dayObj.dateKey}
+                      onClick={() => setCurrentDate(dayObj.dateKey)}
+                      className={clsx(
+                        "flex flex-col items-center justify-center min-w-[50px] py-2 rounded-xl transition-all duration-200 snap-center select-none cursor-pointer border",
+                        isSelected
+                          ? "bg-[#1a73e8] text-white border-[#1a73e8] shadow-sm font-extrabold"
+                          : isToday
+                            ? "bg-teal-50 dark:bg-teal-950/20 text-teal-650 dark:text-teal-400 border-teal-200 dark:border-teal-900/40"
+                            : "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200/50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-900",
+                        isWeekend && !isSelected && "text-red-500"
+                      )}
+                    >
+                      <span className="text-[9px] font-black uppercase tracking-wider leading-none opacity-80">{dayOfWeekName}</span>
+                      <span className="text-sm font-extrabold leading-none mt-1.5">{dayObj.dayNumber}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Listado de Actividades del Día Seleccionado */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 dark:bg-slate-955/10">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
+                  Planificación: {getFriendlyDate(currentDate)}
+                </span>
+              </div>
+
+              {(() => {
+                const daySchedule = scheduleData[currentDate]?.schedule || [];
+                const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
+                
+                // Calcular activeShifts según filtros
+                const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
+                let activeShifts = daySchedule;
+                if (showOnlyGuardias) {
+                  activeShifts = dayGuardias;
+                } else if (showDiferida) {
+                  activeShifts = daySchedule.filter(s =>
+                    s.status === 'De Guardia' || s.shift === 'GPF' ||
+                    s.status === 'Planta'     || s.shift === 'PLA' ||
+                    s.status === 'Diferida Mañana' || s.shift === 'QMU' ||
+                    s.status === 'Diferida Tarde'  || s.shift === 'QTU'
+                  );
+                }
+                
+                const filteredShifts = hasActiveFilters
+                  ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
+                  : activeShifts;
+
+                const matchingShifts = [...filteredShifts].sort((a, b) => shiftPriority(a) - shiftPriority(b));
+
+                if (matchingShifts.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center text-center py-16 px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-2xs">
+                      <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-700" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-2">Sin Asignaciones</p>
+                      <p className="text-[9.5px] text-slate-450 dark:text-slate-500 mt-0.5 max-w-[200px] leading-relaxed">
+                        No se han registrado turnos o no coinciden con los filtros aplicados para este día.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {matchingShifts.map((s, idx) => {
+                      const { bg, label } = getShiftBadgeStyle(s.status, s.shift);
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className="flex flex-col p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-2xs transition-all hover:border-teal-500/20 gap-3 text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-400/10 flex items-center justify-center border border-teal-500/20 shrink-0">
+                                <User className="w-4 h-4 text-teal-650 dark:text-teal-450" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-black text-slate-800 dark:text-slate-150 leading-tight">
+                                  {s.name}
+                                </h4>
+                                <p className="text-[9.5px] text-slate-450 dark:text-slate-500 font-bold leading-none mt-1">
+                                  {s.unit || 'Sin Unidad'}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <span className={clsx(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wide shadow-2xs border border-black/5",
+                              bg
+                            )}>
+                              {label}
+                            </span>
+                          </div>
+
+                          <div className="text-[9.5px] text-slate-500 dark:text-slate-450 font-semibold px-2.5 py-1.5 bg-slate-50/50 dark:bg-slate-950/40 rounded-xl flex justify-between items-center border border-slate-100/50 dark:border-slate-850/50">
+                            <span>Turno: <span className="font-bold text-slate-700 dark:text-slate-200">{s.shift}</span></span>
+                            <span>Estado: <span className="font-bold text-slate-750 dark:text-slate-250">{s.status}</span></span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         ) : (
+          /* VISTA CLÁSICA DESKTOP (Cuadrícula mensual de 7 columnas) */
           <div className="p-3 w-full flex-1 flex flex-col justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
             <div className="w-full flex flex-col flex-1 min-h-0">
               
