@@ -711,7 +711,7 @@ const Adjuntos: React.FC = () => {
                             <span
                               key={si}
                               className={clsx(
-                                "text-[8.5px] font-black uppercase rounded py-0.5 px-1 text-center truncate leading-tight shadow-2xs border border-black/5",
+                                "text-[8.5px] font-black uppercase rounded py-[3px] px-1.5 text-center truncate leading-normal shadow-2xs border border-black/55",
                                 bg
                               )}
                             >
