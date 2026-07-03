@@ -251,16 +251,28 @@ const Adjuntos: React.FC = () => {
                 }
               }
 
+              let newUnit = (s.unit || '').trim();
+              
+              // Unificar las unidades relacionadas con Miembro Superior
+              const lowerUnit = newUnit.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              if (
+                lowerUnit === 'mano' || 
+                lowerUnit === 'hombro' || 
+                lowerUnit === 'mano y codo' || 
+                lowerUnit === 'mano y hombro' ||
+                lowerUnit === 'miembro superior' ||
+                lowerUnit === 'miembros superiores'
+              ) {
+                newUnit = 'Miembros Superiores';
+              }
+
               const lowerName = finalName.toLowerCase();
-              let newUnit = s.unit || '';
               if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
                   (lowerName.includes('jose') || lowerName.includes('josé')) && 
                   (lowerName.includes('maria') || lowerName.includes('maría'))) {
                 newUnit = 'Trauma';
               } else if (lowerName.includes('veronica') || lowerName.includes('verónica')) {
                 newUnit = 'Trauma';
-              } else if (newUnit === 'Miembro Superior') {
-                newUnit = '';
               }
               return { ...s, name: finalName, unit: newUnit };
             });
