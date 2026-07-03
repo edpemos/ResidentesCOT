@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../services/firebase';
+import { auth, db } from '../../services/firebase';
+import { doc, getDocFromServer } from 'firebase/firestore';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Lock, Mail, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
@@ -55,9 +56,6 @@ const Login: React.FC = () => {
           return;
         }
       } else {
-        // Dynamic imports to avoid blocking build/loading
-        const { doc, getDocFromServer } = await import('firebase/firestore');
-        const { db } = await import('../../services/firebase');
         try {
           // Usamos getDocFromServer para saltarnos el caché local y forzar lectura desde red
           const docRef = doc(db, 'readers', cleanEmail);
