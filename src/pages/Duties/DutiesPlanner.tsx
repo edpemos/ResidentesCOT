@@ -703,18 +703,16 @@ const DutiesPlanner: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-2 lg:space-y-6 overflow-hidden px-0 pb-0 lg:px-4 lg:pb-8">
+    <div className="flex-1 min-h-0 flex flex-col space-y-2 lg:space-y-2.5 overflow-hidden px-0 pb-0 lg:px-4 lg:pb-4">
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-1.5 md:gap-4 border-b border-slate-200 dark:border-slate-800 pb-2 md:pb-5 pt-1 md:pt-2 px-3 md:px-0 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 border-b border-slate-200 dark:border-slate-800 pb-1.5 md:pb-2 pt-0.5 md:pt-1 px-3 md:px-0 shrink-0">
         <div>
           <h2 className="text-sm sm:text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-1.5 md:gap-2 font-heading">
             <CalendarCheck className="w-4.5 h-4.5 md:w-6 md:h-6 text-teal-600 dark:text-teal-400" />
             Planificador de Guardias y Tardes
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 hidden sm:block">
-            Asigna turnos, guardias, tardes y días libres para el equipo de residentes de COT.
-          </p>
+          
         </div>
 
         {/* Actions & Month Selector */}
@@ -786,7 +784,7 @@ const DutiesPlanner: React.FC = () => {
           >
             <thead>
               {/* Day numbers row */}
-              <tr className="bg-slate-50 dark:bg-slate-950 h-14 lg:h-8">
+              <tr className="bg-slate-50 dark:bg-slate-950 h-14 lg:h-7">
                 <th className="sticky top-0 left-0 z-30 bg-slate-50 dark:bg-slate-950 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-1 lg:py-1 sm:px-4 border-r border-b border-slate-200/80 dark:border-slate-850/60">
                   <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Residente</span>
                 </th>
@@ -846,7 +844,7 @@ const DutiesPlanner: React.FC = () => {
                       onClick={() => handleWeekdayClick(day)}
                       title={canEdit ? "Haz clic para alternar obligatoriedad (Guardia / RUCOT / Ninguna)" : undefined}
                       className={clsx(
-                        "sticky top-14 lg:top-8 z-20 mobile-duties-day-col lg:w-12 text-center py-1 lg:py-1 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[36px] lg:text-[10px] font-black relative",
+                        "sticky top-14 lg:top-7 z-20 mobile-duties-day-col lg:w-12 text-center py-0.5 lg:py-0.5 border-r border-b border-slate-200/80 dark:border-slate-850/60 text-[36px] lg:text-[10px] font-black relative",
                         isRedDay ? "bg-red-50 dark:bg-red-950 text-red-500" : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400",
                         isMandatory && "bg-red-500/[0.06] dark:bg-red-500/[0.12]",
                         isMandatoryRucot && "bg-blue-600/[0.06] dark:bg-blue-600/[0.12]",
@@ -898,7 +896,7 @@ const DutiesPlanner: React.FC = () => {
                       className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors"
                     >
                       {/* Resident Info Block */}
-                      <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-2 sm:px-3 sm:py-2.5 lg:py-1.5 lg:px-2 border-r border-b border-slate-200 border-b-slate-150 dark:border-slate-800 dark:border-b-slate-800/80">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-2 sm:px-3 sm:py-2.5 lg:py-0.5 lg:px-1.5 border-r border-b border-slate-200 border-b-slate-150 dark:border-slate-800 dark:border-b-slate-800/80">
                         <div className="flex items-center gap-1.5 sm:gap-2.5 w-full h-full bg-white dark:bg-slate-900">
                           <div className="w-14 h-14 lg:w-7 lg:h-7 rounded-full bg-gradient-to-tr from-teal-700 to-emerald-500 flex items-center justify-center shrink-0 border border-teal-600/20 shadow-2xs">
                             <span className="text-[36px] lg:text-[10px] font-black text-white">{res.firstName[0]}{res.lastName?.[0] || ''}</span>
@@ -1062,7 +1060,7 @@ const DutiesPlanner: React.FC = () => {
                             key={day}
                             onClick={() => handleCellClick(res.id, day, isSaliente)}
                             className={clsx(
-                              "mobile-duties-day-col h-24 lg:w-12 lg:h-12 text-center p-1 border-r border-b border-slate-200/80 border-b-slate-150 dark:border-slate-850/60 dark:border-b-slate-800/80 relative group",
+                              "mobile-duties-day-col h-24 lg:w-12 lg:h-9 text-center p-0.5 border-r border-b border-slate-200/80 border-b-slate-150 dark:border-slate-850/60 dark:border-b-slate-800/80 relative group",
                               isWeekendOrHoliday && "bg-red-50/10 dark:bg-red-950/5",
                               isMandatory && "bg-red-500/[0.04] dark:bg-red-500/[0.08]",
                               isMandatoryRucot && "bg-blue-600/[0.04] dark:bg-blue-600/[0.08]",
