@@ -137,6 +137,9 @@ const Adjuntos: React.FC = () => {
   // Estado para ver solo guardias
   const [showOnlyGuardias, setShowOnlyGuardias] = useState(false);
 
+  // Estado para ver Diferida (Guardia + Planta + Diferida Mañana + Diferida Tarde)
+  const [showDiferida, setShowDiferida] = useState(false);
+
   // Estado para controlar apertura de modal de detalle
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -258,6 +261,8 @@ const Adjuntos: React.FC = () => {
   const clearAllFilters = () => {
     setHighlightedNames(new Set());
     setSelectedUnits(new Set());
+    setShowDiferida(false);
+    setShowOnlyGuardias(false);
   };
 
   // Obtener los días del mes actual para renderizar el calendario cuadrícula
@@ -295,10 +300,22 @@ const Adjuntos: React.FC = () => {
   const selectedDayPlan = useMemo(() => {
     const rawPlan = scheduleData[currentDate]?.schedule || [];
     
-    // Filtrar por guardias si está activo
-    let filtered = showOnlyGuardias 
-      ? rawPlan.filter(s => s.status === 'De Guardia' || s.shift === 'GPF')
-      : rawPlan;
+    // Aplicar filtros de tipo de turno
+    let filtered = rawPlan;
+    if (showOnlyGuardias) {
+      filtered = rawPlan.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
+    } else if (showDiferida) {
+      filtered = rawPlan.filter(s =>
+        s.status === 'De Guardia' ||
+        s.shift === 'GPF' ||
+        s.status === 'Planta' ||
+        s.shift === 'PLA' ||
+        s.status === 'Diferida Mañana' ||
+        s.shift === 'QMU' ||
+        s.status === 'Diferida Tarde' ||
+        s.shift === 'QTU'
+      );
+    }
 
     // Filtrar por médicos o unidades seleccionadas
     const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
@@ -311,7 +328,7 @@ const Adjuntos: React.FC = () => {
     }
 
     return filtered;
-  }, [scheduleData, currentDate, showOnlyGuardias, highlightedNames, selectedUnits]);
+  }, [scheduleData, currentDate, showOnlyGuardias, showDiferida, highlightedNames, selectedUnits]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full max-w-[98%] xl:max-w-[96%] mx-auto px-2 sm:px-4 pb-10">
@@ -496,16 +513,36 @@ const Adjuntos: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
             {/* Solo Guardias Toggle */}
             <button
-              onClick={() => setShowOnlyGuardias(!showOnlyGuardias)}
+              onClick={() => {
+                setShowOnlyGuardias(!showOnlyGuardias);
+                if (!showOnlyGuardias) setShowDiferida(false);
+              }}
               className={clsx(
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer select-none',
                 showOnlyGuardias
-                  ? 'bg-red-500 text-white border-red-650 shadow-md shadow-red-500/10'
+                  ? 'bg-[#D93025] text-white border-red-700 shadow-md shadow-red-500/20'
                   : 'bg-white dark:bg-slate-900 text-slate-655 dark:text-slate-400 border-slate-250/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800'
               )}
             >
-              <span className={clsx('w-2 h-2 rounded-full', showOnlyGuardias ? 'bg-white animate-pulse' : 'bg-red-500')} />
-              Ver Solo Guardias
+              <span className={clsx('w-2 h-2 rounded-full', showOnlyGuardias ? 'bg-white animate-pulse' : 'bg-[#D93025]')} />
+              Solo Guardias
+            </button>
+
+            {/* Marcar Diferida Toggle */}
+            <button
+              onClick={() => {
+                setShowDiferida(!showDiferida);
+                if (!showDiferida) setShowOnlyGuardias(false);
+              }}
+              className={clsx(
+                'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer select-none',
+                showDiferida
+                  ? 'bg-[#8430CE] text-white border-purple-800 shadow-md shadow-purple-500/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-655 dark:text-slate-400 border-slate-250/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800'
+              )}
+            >
+              <span className={clsx('w-2 h-2 rounded-full', showDiferida ? 'bg-white animate-pulse' : 'bg-[#8430CE]')} />
+              Marcar Diferida
             </button>
 
             {/* Pestañas de Meses en cabecera */}
@@ -576,9 +613,19 @@ const Adjuntos: React.FC = () => {
                   const isWeekend = cellDayOfWeek === 5 || cellDayOfWeek === 6;
                   const isRedDay = isWeekend;
 
-                  // Si hay filtros, mostramos solo lo que coincide
+                  // Calcular activeShifts según el filtro de tipo de turno activo
                   const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
-                  const activeShifts = showOnlyGuardias ? dayGuardias : daySchedule;
+                  let activeShifts = daySchedule;
+                  if (showOnlyGuardias) {
+                    activeShifts = dayGuardias;
+                  } else if (showDiferida) {
+                    activeShifts = daySchedule.filter(s =>
+                      s.status === 'De Guardia' || s.shift === 'GPF' ||
+                      s.status === 'Planta'     || s.shift === 'PLA' ||
+                      s.status === 'Diferida Mañana' || s.shift === 'QMU' ||
+                      s.status === 'Diferida Tarde'  || s.shift === 'QTU'
+                    );
+                  }
                   
                   const filteredShifts = hasActiveFilters
                     ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
