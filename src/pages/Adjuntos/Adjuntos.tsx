@@ -121,15 +121,36 @@ const getShiftBadgeClasses = (status: string) => {
 };
 
 // Orden de prioridad dentro de cada día:
-//   0 → Guardia  (GPF / De Guardia)   ← primero
-//   1 → Planta   (PLA / Planta)        ← segundo
-//   2 → Todo lo demás (quirófanos, consultas, cursos…)
-//   3 → Localizado (GLO / Localizado)  ← siempre al final
+//   0  → Guardia         (GPF / De Guardia)
+//   1  → Planta          (PLA / Planta)
+//   ── Actividad de mañana ──
+//   2  → Diferida Mañana (QMU)
+//   3  → Quirófano Mañana (QM1, QM2…)
+//   4  → Consulta Mañana (CM)
+//   ── Actividad de tarde ──
+//   5  → Diferida Tarde  (QTU)
+//   6  → Quirófano Tarde (QT1, QT2…)
+//   7  → Consulta Tarde  (CT)
+//   ── Resto ──
+//   8  → Curso / Congreso
+//   9  → Gestión
+//   10 → Localizado      (GLO) ← siempre al final
 const shiftPriority = (s: AttendingShift): number => {
-  if (s.status === 'De Guardia' || s.shift === 'GPF') return 0;
-  if (s.status === 'Planta'     || s.shift === 'PLA') return 1;
-  if (s.status === 'Localizado' || s.shift === 'GLO') return 3;
-  return 2;
+  const st = s.status;
+  const sh = s.shift ?? '';
+
+  if (st === 'De Guardia'      || sh === 'GPF')                    return 0;
+  if (st === 'Planta'          || sh === 'PLA')                    return 1;
+  if (st === 'Diferida Mañana' || sh === 'QMU')                    return 2;
+  if (st === 'Quirófano Mañana'|| sh.startsWith('QM'))             return 3;
+  if (st === 'Consulta Mañana' || sh === 'CM' || sh.startsWith('CM')) return 4;
+  if (st === 'Diferida Tarde'  || sh === 'QTU')                    return 5;
+  if (st === 'Quirófano Tarde' || sh.startsWith('QT'))             return 6;
+  if (st === 'Consulta Tarde'  || sh === 'CT' || sh.startsWith('CT')) return 7;
+  if (st === 'Curso/Congreso'  || sh === 'Cur' || sh === 'C')      return 8;
+  if (st === 'Gestión'         || sh === 'Ges')                    return 9;
+  if (st === 'Localizado'      || sh === 'GLO')                    return 10;
+  return 5; // desconocido → en el bloque de tarde
 };
 
 const Adjuntos: React.FC = () => {
