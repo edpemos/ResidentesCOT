@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Settings, Loader2 } from 'lucide-react';
 
 const InitialSetup: React.FC = () => {
-  const { user, initializeAsAdmin, logout } = useAuthStore();
+  const { user, initializeAsAdmin, logout, needsSetup } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!needsSetup) {
+    return <Navigate to="/home" replace />;
+  }
 
   const handleInit = async () => {
     setIsLoading(true);

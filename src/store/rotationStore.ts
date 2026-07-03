@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Resident, ResidentYear, Rotation } from '../types';
 import { differenceInYears, parseISO } from 'date-fns';
+// mockData solo se importa estáticamente en modo mock (desarrollo sin Firebase)
+// En producción esto no afecta ya que isMockMode() es false y el tree-shaking lo elimina
 import { MOCK_RESIDENTS, MOCK_ROTATIONS } from './mockData';
 import { collection, getDocs, doc, setDoc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -37,6 +39,13 @@ const getCurrentAcademicYearStart = (): number => {
   return now.getMonth() < 4 ? now.getFullYear() - 1 : now.getFullYear();
 };
 
+const pushToHistory = (get: any, set: any) => {
+  const current = get().rotations;
+  const history = get().history || [];
+  const updatedHistory = [...history, JSON.parse(JSON.stringify(current))].slice(-10);
+  set({ history: updatedHistory });
+};
+
 interface RotationState {
   residents: Resident[];
   rotations: Rotation[];
@@ -44,6 +53,7 @@ interface RotationState {
   viewMode: 'academicYear' | 'resident';
   selectedResidentId: string;
   isLoading: boolean;
+  history: Rotation[][];
   
   // Store actions
   initializeStore: () => Promise<void>;
@@ -56,20 +66,32 @@ interface RotationState {
   setCurrentYear: (year: number) => void;
   setViewMode: (mode: 'academicYear' | 'resident') => void;
   setSelectedResidentId: (id: string) => void;
+  undo: () => Promise<void>;
 
   // Residents Actions
   addResident: (resident: Omit<Resident, 'id' | 'year'>) => Promise<void>;
   updateResident: (id: string, updates: Partial<Omit<Resident, 'id' | 'year'>>) => Promise<void>;
   deleteResident: (id: string) => Promise<void>;
+  
+  // Row Cloning Action
+  copyRotationsRow: (sourceResidentId: string, sourceYear: number, targetResidentId: string, targetYear: number) => Promise<void>;
+  
+  // Board Cloning Action
+  cloneAcademicYear: (sourceYear: number, targetYear: number) => Promise<void>;
 }
 
+// En producción, el store arranca vacío y se rellena desde Firestore via initializeStore()
+// En modo mock, usa los datos de mockData para desarrollo sin Firebase
+const _isMock = isMockMode();
+
 export const useRotationStore = create<RotationState>((set, get) => ({
-  residents: MOCK_RESIDENTS.map(r => ({ ...r, year: calculateResidentYear(r.startDate) as any })),
-  rotations: MOCK_ROTATIONS.map(r => ({ ...r, isVacation: false })),
+  residents: _isMock ? MOCK_RESIDENTS.map(r => ({ ...r, year: calculateResidentYear(r.startDate) as any })) : [],
+  rotations: _isMock ? MOCK_ROTATIONS.map(r => ({ ...r, isVacation: false })) : [],
   currentYear: getCurrentAcademicYearStart(),
   viewMode: 'academicYear',
-  selectedResidentId: MOCK_RESIDENTS[0]?.id || '',
-  isLoading: false,
+  selectedResidentId: _isMock ? (MOCK_RESIDENTS[0]?.id || '') : '',
+  isLoading: !_isMock, // En producción empieza cargando hasta que initializeStore complete
+  history: [],
 
   initializeStore: async () => {
     if (isMockMode()) return;
@@ -175,6 +197,7 @@ export const useRotationStore = create<RotationState>((set, get) => ({
   setSelectedResidentId: (selectedResidentId) => set({ selectedResidentId }),
   
   updateRotation: async (id, updates) => {
+    pushToHistory(get, set);
     if (isMockMode()) {
       set((state) => ({
         rotations: state.rotations.map(r => r.id === id ? { ...r, ...updates } : r)
@@ -192,66 +215,102 @@ export const useRotationStore = create<RotationState>((set, get) => ({
   },
 
   moveRotation: async (id, newResidentId, newMonth, targetYear) => {
+    pushToHistory(get, set);
     const yearToUse = targetYear !== undefined ? targetYear : (newMonth >= 5 ? get().currentYear : get().currentYear + 1);
     
-    // Perform local memory update first for zero-latency UI
-    set((state) => {
-      const targetRotationIndex = state.rotations.findIndex(
-        r => r.residentId === newResidentId && r.month === newMonth && r.year === yearToUse
-      );
+    const sourceRot = get().rotations.find(r => r.id === id);
+    if (!sourceRot) return;
 
-      let newRotations = [...state.rotations];
-      const sourceRotation = newRotations.find(r => r.id === id);
+    const oldResidentId = sourceRot.residentId;
+    const oldMonth = sourceRot.month;
+    const oldYear = sourceRot.year;
 
-      if (!sourceRotation) return state;
+    const targetRot = get().rotations.find(
+      r => r.residentId === newResidentId && r.month === newMonth && r.year === yearToUse
+    );
 
-      if (targetRotationIndex !== -1 && newRotations[targetRotationIndex].id !== id) {
-        // Swap rotations
-        const tempResident = newRotations[targetRotationIndex].residentId;
-        const tempMonth = newRotations[targetRotationIndex].month;
-        const tempYear = newRotations[targetRotationIndex].year;
-        
-        newRotations[targetRotationIndex].residentId = sourceRotation.residentId;
-        newRotations[targetRotationIndex].month = sourceRotation.month;
-        newRotations[targetRotationIndex].year = sourceRotation.year;
-        
-        sourceRotation.residentId = tempResident;
-        sourceRotation.month = tempMonth;
-        sourceRotation.year = tempYear;
-      } else {
-        sourceRotation.residentId = newResidentId;
-        sourceRotation.month = newMonth;
-        sourceRotation.year = yearToUse;
+    const sourceNewId = `rot_${newResidentId}_${yearToUse}_${newMonth}`;
+    const targetNewId = targetRot ? `rot_${oldResidentId}_${oldYear}_${oldMonth}` : null;
+
+    if (isMockMode()) {
+      set((state) => {
+        let newRotations = state.rotations.filter(r => r.id !== id && (!targetRot || r.id !== targetRot.id));
+
+        const updatedSource = {
+          ...sourceRot,
+          id: sourceNewId,
+          residentId: newResidentId,
+          month: newMonth,
+          year: yearToUse
+        };
+
+        const updatedTarget = targetRot ? {
+          ...targetRot,
+          id: targetNewId!,
+          residentId: oldResidentId,
+          month: oldMonth,
+          year: oldYear
+        } : null;
+
+        newRotations.push(updatedSource);
+        if (updatedTarget) newRotations.push(updatedTarget);
+
+        return { rotations: newRotations };
+      });
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+
+      // 1. Delete old documents in Firestore to free up slot keys
+      batch.delete(doc(db, 'rotations', id));
+      if (targetRot) {
+        batch.delete(doc(db, 'rotations', targetRot.id));
       }
 
-      // Background sync to Firestore
-      if (!isMockMode()) {
-        const batch = writeBatch(db);
-        if (targetRotationIndex !== -1 && newRotations[targetRotationIndex].id !== id) {
-          const tRot = newRotations[targetRotationIndex];
-          batch.set(doc(db, 'rotations', tRot.id), {
-            residentId: tRot.residentId,
-            month: tRot.month,
-            year: tRot.year,
-            unitId: tRot.unitId,
-            isVacation: tRot.isVacation
-          });
+      // 2. Insert new documents with slot-matching IDs
+      const updatedSource = {
+        residentId: newResidentId,
+        month: newMonth,
+        year: yearToUse,
+        unitId: sourceRot.unitId,
+        isVacation: sourceRot.isVacation
+      };
+      batch.set(doc(db, 'rotations', sourceNewId), updatedSource);
+
+      let updatedTargetObj: Rotation | null = null;
+      if (targetRot) {
+        const updatedTarget = {
+          residentId: oldResidentId,
+          month: oldMonth,
+          year: oldYear,
+          unitId: targetRot.unitId,
+          isVacation: targetRot.isVacation
+        };
+        batch.set(doc(db, 'rotations', targetNewId!), updatedTarget);
+        updatedTargetObj = { id: targetNewId!, ...updatedTarget } as Rotation;
+      }
+
+      await batch.commit();
+
+      // 3. Update local state with new slot IDs
+      set((state) => {
+        let newRotations = state.rotations.filter(r => r.id !== id && (!targetRot || r.id !== targetRot.id));
+        newRotations.push({ id: sourceNewId, ...updatedSource } as Rotation);
+        if (updatedTargetObj) {
+          newRotations.push(updatedTargetObj);
         }
-        batch.set(doc(db, 'rotations', sourceRotation.id), {
-          residentId: sourceRotation.residentId,
-          month: sourceRotation.month,
-          year: sourceRotation.year,
-          unitId: sourceRotation.unitId,
-          isVacation: sourceRotation.isVacation
-        });
-        batch.commit().catch(err => console.error('Error syncing moved rotation to Firestore:', err));
-      }
+        return { rotations: newRotations };
+      });
 
-      return { rotations: newRotations };
-    });
+    } catch (err) {
+      console.error('Error moving rotation in Firestore:', err);
+    }
   },
 
   toggleVacation: async (id) => {
+    pushToHistory(get, set);
     const rotation = get().rotations.find(r => r.id === id);
     if (!rotation) return;
     const nextVacationState = !rotation.isVacation;
@@ -273,24 +332,36 @@ export const useRotationStore = create<RotationState>((set, get) => ({
   },
 
   addRotation: async (rotation) => {
+    pushToHistory(get, set);
     if (isMockMode()) {
-      set((state) => ({
-        rotations: [...state.rotations, { ...rotation, id: Math.random().toString(36).substr(2, 9) }]
-      }));
+      set((state) => {
+        const filtered = state.rotations.filter(
+          r => !(r.residentId === rotation.residentId && r.month === rotation.month && r.year === rotation.year)
+        );
+        return {
+          rotations: [...filtered, { ...rotation, id: Math.random().toString(36).substr(2, 9) }]
+        };
+      });
       return;
     }
     try {
       const tempId = `rot_${rotation.residentId}_${rotation.year}_${rotation.month}`;
       await setDoc(doc(db, 'rotations', tempId), rotation);
-      set((state) => ({
-        rotations: [...state.rotations, { ...rotation, id: tempId }]
-      }));
+      set((state) => {
+        const filtered = state.rotations.filter(
+          r => !(r.residentId === rotation.residentId && r.month === rotation.month && r.year === rotation.year)
+        );
+        return {
+          rotations: [...filtered, { ...rotation, id: tempId }]
+        };
+      });
     } catch (err) {
       console.error('Error adding rotation to Firestore:', err);
     }
   },
 
   deleteRotation: async (id) => {
+    pushToHistory(get, set);
     if (isMockMode()) {
       set((state) => ({
         rotations: state.rotations.filter(r => r.id !== id)
@@ -387,6 +458,217 @@ export const useRotationStore = create<RotationState>((set, get) => ({
       }));
     } catch (err) {
       console.error('Error deleting resident from Firestore:', err);
+    }
+  },
+
+  copyRotationsRow: async (sourceResidentId, sourceYear, targetResidentId, targetYear) => {
+    pushToHistory(get, set);
+    // Correctly fetch rotations for academic year (June index 5 to Dec index 11 in sourceYear, Jan index 0 to May index 4 in sourceYear + 1)
+    const sourceRotations = get().rotations.filter(
+      r => r.residentId === sourceResidentId &&
+        ((r.month >= 5 && r.year === sourceYear) || (r.month < 5 && r.year === sourceYear + 1))
+    );
+
+    if (sourceRotations.length === 0) return;
+
+    if (isMockMode()) {
+      set((state) => {
+        const filtered = state.rotations.filter(
+          r => !(r.residentId === targetResidentId &&
+            ((r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1)))
+        );
+        
+        const newCopied = sourceRotations.map(rot => {
+          const tgtCalYear = rot.month >= 5 ? targetYear : targetYear + 1;
+          return {
+            id: Math.random().toString(36).substr(2, 9),
+            residentId: targetResidentId,
+            month: rot.month,
+            year: tgtCalYear,
+            unitId: rot.unitId,
+            isVacation: rot.isVacation
+          };
+        });
+
+        return { rotations: [...filtered, ...newCopied] };
+      });
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+      
+      const targetRotationsInState = get().rotations.filter(
+        r => r.residentId === targetResidentId &&
+          ((r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1))
+      );
+
+      targetRotationsInState.forEach(r => {
+        batch.delete(doc(db, 'rotations', r.id));
+      });
+
+      const newCopiedRotations: Rotation[] = [];
+      sourceRotations.forEach(rot => {
+        const tgtCalYear = rot.month >= 5 ? targetYear : targetYear + 1;
+        const tempId = `rot_${targetResidentId}_${tgtCalYear}_${rot.month}`;
+        const newRot = {
+          residentId: targetResidentId,
+          month: rot.month,
+          year: tgtCalYear,
+          unitId: rot.unitId,
+          isVacation: rot.isVacation
+        };
+        batch.set(doc(db, 'rotations', tempId), newRot);
+        newCopiedRotations.push({ id: tempId, ...newRot } as Rotation);
+      });
+
+      await batch.commit();
+
+      set((state) => {
+        const filtered = state.rotations.filter(
+          r => !(r.residentId === targetResidentId &&
+            ((r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1)))
+        );
+        return { rotations: [...filtered, ...newCopiedRotations] };
+      });
+    } catch (err) {
+      console.error('Error copying rotations row:', err);
+    }
+  },
+
+  cloneAcademicYear: async (sourceYear, targetYear) => {
+    pushToHistory(get, set);
+    // Find all rotations for the source academic year (from June sourceYear to May sourceYear + 1)
+    const sourceRotations = get().rotations.filter(
+      r => (r.month >= 5 && r.year === sourceYear) || (r.month < 5 && r.year === sourceYear + 1)
+    );
+
+    if (sourceRotations.length === 0) return;
+
+    if (isMockMode()) {
+      set((state) => {
+        // Delete all rotations in the target academic year
+        const filtered = state.rotations.filter(
+          r => !((r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1))
+        );
+        
+        const newCopied = sourceRotations.map(rot => {
+          const tgtCalYear = rot.month >= 5 ? targetYear : targetYear + 1;
+          return {
+            id: Math.random().toString(36).substr(2, 9),
+            residentId: rot.residentId,
+            month: rot.month,
+            year: tgtCalYear,
+            unitId: rot.unitId,
+            isVacation: rot.isVacation
+          };
+        });
+
+        return { rotations: [...filtered, ...newCopied] };
+      });
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+      
+      // Delete existing rotations in target academic year
+      const targetRotationsInState = get().rotations.filter(
+        r => (r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1)
+      );
+
+      targetRotationsInState.forEach(r => {
+        batch.delete(doc(db, 'rotations', r.id));
+      });
+
+      const newCopiedRotations: Rotation[] = [];
+      sourceRotations.forEach(rot => {
+        const tgtCalYear = rot.month >= 5 ? targetYear : targetYear + 1;
+        const tempId = `rot_${rot.residentId}_${tgtCalYear}_${rot.month}`;
+        const newRot = {
+          residentId: rot.residentId,
+          month: rot.month,
+          year: tgtCalYear,
+          unitId: rot.unitId,
+          isVacation: rot.isVacation
+        };
+        batch.set(doc(db, 'rotations', tempId), newRot);
+        newCopiedRotations.push({ id: tempId, ...newRot } as Rotation);
+      });
+
+      await batch.commit();
+
+      set((state) => {
+        const filtered = state.rotations.filter(
+          r => !((r.month >= 5 && r.year === targetYear) || (r.month < 5 && r.year === targetYear + 1))
+        );
+        return { rotations: [...filtered, ...newCopiedRotations] };
+      });
+    } catch (err) {
+      console.error('Error cloning academic year:', err);
+    }
+  },
+
+  undo: async () => {
+    const history = get().history || [];
+    if (history.length === 0) return;
+    
+    set({ isLoading: true });
+    const previousState = history[history.length - 1];
+    const newHistory = history.slice(0, -1);
+    const currentState = get().rotations;
+    
+    if (isMockMode()) {
+      set({
+        rotations: previousState,
+        history: newHistory,
+        isLoading: false
+      });
+      return;
+    }
+    
+    try {
+      const batch = writeBatch(db);
+      
+      // 1. Delete rotations that were added in current state
+      const toDelete = currentState.filter(curr => !previousState.some(prev => prev.id === curr.id));
+      toDelete.forEach(rot => {
+        batch.delete(doc(db, 'rotations', rot.id));
+      });
+      
+      // 2. Add or update rotations from previous state
+      previousState.forEach(prev => {
+        const curr = currentState.find(c => c.id === prev.id);
+        if (!curr) {
+          const { id, ...data } = prev;
+          batch.set(doc(db, 'rotations', id), data);
+        } else {
+          const hasChanged = 
+            curr.residentId !== prev.residentId ||
+            curr.month !== prev.month ||
+            curr.year !== prev.year ||
+            curr.unitId !== prev.unitId ||
+            curr.isVacation !== prev.isVacation ||
+            curr.status !== prev.status ||
+            curr.customName !== prev.customName;
+            
+          if (hasChanged) {
+            const { id, ...data } = prev;
+            batch.set(doc(db, 'rotations', id), data);
+          }
+        }
+      });
+      
+      await batch.commit();
+      
+      set({
+        rotations: previousState,
+        history: newHistory,
+        isLoading: false
+      });
+    } catch (err) {
+      console.error('Error during undo operation:', err);
+      set({ isLoading: false });
     }
   }
 }));

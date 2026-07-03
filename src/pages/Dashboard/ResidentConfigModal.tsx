@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRotationStore, calculateResidentYear } from '../../store/rotationStore';
-import { X, UserPlus, Trash2, Edit2, Check, XCircle } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { X, UserPlus, Trash2, Edit2, Check, XCircle, Key } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ResidentConfigModalProps {
@@ -10,6 +11,7 @@ interface ResidentConfigModalProps {
 
 const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClose }) => {
   const { residents, addResident, updateResident, deleteResident } = useRotationStore();
+  const { readers, fetchReaders, addReader, removeReader } = useAuthStore();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -20,6 +22,14 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
   const [email, setEmail] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [password, setPassword] = useState('');
+  const [accessRole, setAccessRole] = useState<'reader' | 'coordinador'>('reader');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchReaders();
+    }
+  }, [isOpen, fetchReaders]);
 
   if (!isOpen) return null;
 
@@ -29,6 +39,8 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
     setEmail('');
     setStartDate('');
     setEndDate('');
+    setPassword('');
+    setAccessRole('reader');
     setIsAdding(false);
     setEditingId(null);
   };
@@ -41,30 +53,57 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
       setEmail(res.email);
       setStartDate(res.startDate.split('T')[0]); // get YYYY-MM-DD
       setEndDate(res.endDate.split('T')[0]);
+      
+      const matchedReader = readers.find(r => r.username.toLowerCase() === res.email.toLowerCase());
+      if (matchedReader) {
+        setPassword(matchedReader.password || '');
+        setAccessRole(matchedReader.role || 'reader');
+      } else {
+        setPassword('');
+        setAccessRole('reader');
+      }
+
       setEditingId(id);
       setIsAdding(false);
     }
   };
 
-  const handleSave = () => {
-    if (!firstName || !startDate || !endDate || !email) return;
+  const handleSave = async () => {
+    if (!firstName || !startDate || !endDate || !email || !password) return;
+
+    const emailNormalized = email.trim().toLowerCase();
 
     if (editingId) {
+      const oldRes = residents.find(r => r.id === editingId);
+      const oldEmail = oldRes ? oldRes.email.trim().toLowerCase() : '';
+
+      // Si el correo cambió, eliminamos el perfil de acceso anterior
+      if (oldEmail && oldEmail !== emailNormalized) {
+        await removeReader(oldEmail);
+      }
+
+      // Creamos/actualizamos el perfil de acceso del residente
+      await addReader(emailNormalized, password.trim(), accessRole);
+
       updateResident(editingId, { 
         firstName, 
         lastName, 
-        email, 
+        email: emailNormalized, 
         startDate: new Date(startDate).toISOString(), 
         endDate: new Date(endDate).toISOString() 
       });
     } else {
+      // Crear nuevo residente
       addResident({ 
         firstName, 
         lastName, 
-        email, 
+        email: emailNormalized, 
         startDate: new Date(startDate).toISOString(), 
         endDate: new Date(endDate).toISOString() 
       });
+
+      // Crear nuevo perfil de acceso
+      await addReader(emailNormalized, password.trim(), accessRole);
     }
     resetForm();
   };
@@ -132,6 +171,31 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                   />
                 </div>
                 <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
+                  <div className="relative">
+                    <Key className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input 
+                      type="password" 
+                      value={password} 
+                      onChange={e => setPassword(e.target.value)} 
+                      className="w-full border border-slate-300 bg-white text-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" 
+                      placeholder="Establece una contraseña" 
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tipo de Perfil de Acceso *</label>
+                  <select 
+                    value={accessRole} 
+                    onChange={e => setAccessRole(e.target.value as 'reader' | 'coordinador')}
+                    className="w-full border border-slate-300 bg-white text-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-slate-700"
+                  >
+                    <option value="reader">Residente (Solo Lectura)</option>
+                    <option value="coordinador">Coordinador (Edita Guardias)</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Fecha Inicio Residencia *</label>
                   <input 
                     type="date" 
@@ -170,7 +234,7 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                 </button>
                 <button 
                   onClick={handleSave} 
-                  disabled={!firstName || !startDate || !endDate || !email} 
+                  disabled={!firstName || !startDate || !endDate || !email || !password} 
                   className="flex items-center gap-2 px-5 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <Check className="w-4 h-4" /> Guardar Cambios
@@ -200,6 +264,7 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                   <tr>
                     <th className="px-4 py-3 font-semibold">Nombre Completo</th>
                     <th className="px-4 py-3 font-semibold">Correo Electrónico</th>
+                    <th className="px-4 py-3 font-semibold text-center">Perfil / Rol</th>
                     <th className="px-4 py-3 font-semibold">Fechas (Inicio - Fin)</th>
                     <th className="px-4 py-3 font-semibold text-center">Año</th>
                     <th className="px-4 py-3 font-semibold text-right">Acciones</th>
@@ -215,6 +280,22 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                         {res.lastName ? `${res.lastName}, ` : ''}{res.firstName}
                       </td>
                       <td className="px-4 py-3 text-slate-600 font-medium">{res.email}</td>
+                      <td className="px-4 py-3 text-center">
+                        {(() => {
+                          const matchedReader = readers.find(r => r.username.toLowerCase() === res.email.toLowerCase());
+                          const label = matchedReader 
+                            ? (matchedReader.role === 'coordinador' ? 'Coordinador' : 'Residente')
+                            : 'Sin Acceso';
+                          const colorClass = matchedReader 
+                            ? (matchedReader.role === 'coordinador' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')
+                            : 'bg-slate-50 text-slate-400 border-slate-200';
+                          return (
+                            <span className={clsx("inline-block px-2 py-0.5 rounded text-xs font-bold border select-none", colorClass)}>
+                              {label}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-xs text-slate-500 font-medium">
                         {new Date(res.startDate).toLocaleDateString()} a {new Date(res.endDate).toLocaleDateString()}
                       </td>
@@ -233,8 +314,11 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => {
-                              if(window.confirm('¿Estás seguro de borrar este residente? Se eliminarán todas sus rotaciones históricas.')) deleteResident(res.id);
+                            onClick={async () => {
+                              if(window.confirm('¿Estás seguro de borrar este residente? Se eliminarán todas sus rotaciones históricas.')) {
+                                await removeReader(res.email.toLowerCase());
+                                deleteResident(res.id);
+                              }
                             }}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
                             title="Borrar Residente"
@@ -247,7 +331,7 @@ const ResidentConfigModal: React.FC<ResidentConfigModalProps> = ({ isOpen, onClo
                   ))}
                   {residents.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-12 text-center text-slate-550 italic font-medium">
+                      <td colSpan={6} className="px-4 py-12 text-center text-slate-550 italic font-medium">
                         No hay residentes registrados
                       </td>
                     </tr>

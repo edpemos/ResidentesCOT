@@ -1,0 +1,41 @@
+name: Descarga de Guardias Guardiscopio
+
+on:
+  schedule:
+    # Corre a las 02:00 UTC (04:00 hora de España) todos los días
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Permite ejecución manual desde la pestaña de Actions en GitHub
+
+jobs:
+  download-schedule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias del script
+        run: |
+          npm install playwright
+
+      - name: Instalar navegadores de Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Ejecutar script de descarga
+        env:
+          GUARDISCOPIO_EMAIL: ${{ secrets.GUARDISCOPIO_EMAIL }}
+          GUARDISCOPIO_PASSWORD: ${{ secrets.GUARDISCOPIO_PASSWORD }}
+        run: node scripts/download_schedule.js
+
+      - name: Subir excels como artefacto de la ejecución
+        uses: actions/upload-artifact@v4
+        with:
+          name: excels-guardiscopio
+          path: downloads/
+          retention-days: 7

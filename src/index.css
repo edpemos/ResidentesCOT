@@ -44,3 +44,135 @@ h1, h2, h3, h4, h5, h6 {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 8mm;
+  }
+
+  /* Hide navigation, settings, counselor, control panels, overlay modals, and copy/delete buttons */
+  aside, nav, button, select, header, footer, 
+  .no-print, [title="Ocultar Opciones"], [title="Mostrar Opciones"],
+  button[title="Copiar Fila de Rotaciones"],
+  button[title="Eliminar Rotación"],
+  .AICounselor, .CounterPanel, .ResidentConfigModal, .delete-zone {
+    display: none !important;
+  }
+
+  /* Make sure main layout occupies 100% size and breaks visually cleanly */
+  body, html, #root, main, .main-content-layout {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Force background colors to show up in PDF exports */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Optimize Board main container styling for perfect printing */
+  .bg-white.dark\:bg-slate-900\/50.rounded-xl {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure rows fit landscape width perfectly */
+  .flex-1.grid.grid-cols-12 {
+    width: 100% !important;
+  }
+}
+
+/* Optimización móvil para la Pizarra de Guardias */
+@media (max-width: 1023px) {
+  .mobile-duties-table {
+    width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
+    min-width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
+    max-width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
+  }
+  .mobile-duties-name-col {
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+  }
+  .mobile-duties-day-col {
+    width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
+    min-width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
+    max-width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
+  }
+}
+
+/* =============================================
+   Safe Area — iPhone notch / Dynamic Island
+   ============================================= */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* La bottom nav necesita espacio extra en iPhones con Face ID */
+.mobile-nav-safe {
+  height: calc(72px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* El contenido principal debe quedar por encima de la bottom nav + safe area */
+.content-pb-safe {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+/* =============================================
+   Animación fade-in para el PageLoader (Suspense)
+   ============================================= */
+@keyframes fadeInLoader {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.page-loader-fade {
+  animation: fadeInLoader 0.2s ease-in forwards;
+}
+
+/* =============================================
+   Bottom Sheet — overlay y panel
+   ============================================= */
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes slideDownSheet {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(100%); opacity: 0; }
+}
+.bottom-sheet-enter {
+  animation: slideUpSheet 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+.bottom-sheet-exit {
+  animation: slideDownSheet 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* =============================================
+   Toast notifications
+   ============================================= */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0)    scale(1); }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+.toast-enter {
+  animation: toastIn  0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.toast-exit {
+  animation: toastOut 0.2s ease-in forwards;
+}
+
+

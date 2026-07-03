@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useSessionStore } from '../../store/sessionStore';
 import { useRotationStore } from '../../store/rotationStore';
 import { useUnitStore } from '../../store/unitStore';
+import type { Session } from '../../types';
+import clsx from 'clsx';
 
+interface SessionFormProps {
+  editingSession: Session | null;
+  clearEditing: () => void;
+}
 
-const SessionForm: React.FC = () => {
-  const { addSession } = useSessionStore();
+const SessionForm: React.FC<SessionFormProps> = ({ editingSession, clearEditing }) => {
+  const { addSession, updateSession } = useSessionStore();
   const { residents, rotations } = useRotationStore();
   const { units } = useUnitStore();
 
@@ -15,9 +21,33 @@ const SessionForm: React.FC = () => {
   const [tutorId, setTutorId] = useState('');
   const [selectedUnitId, setSelectedUnitId] = useState('');
 
+  // Populate form when editingSession changes
+  useEffect(() => {
+    if (editingSession) {
+      try {
+        const d = new Date(editingSession.date);
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+        setDate(localISOTime);
+      } catch (e) {
+        setDate('');
+      }
+      setTopic(editingSession.topic);
+      setResidentId(editingSession.residentId);
+      setTutorId(editingSession.tutorId);
+      setSelectedUnitId('');
+    } else {
+      setDate('');
+      setTopic('');
+      setResidentId('');
+      setTutorId('');
+      setSelectedUnitId('');
+    }
+  }, [editingSession]);
+
   // Auto-sugerencia de residente basado en la unidad y fecha
   useEffect(() => {
-    if (date && selectedUnitId) {
+    if (date && selectedUnitId && !editingSession) {
       const selectedDate = new Date(date);
       const month = selectedDate.getMonth();
       const year = selectedDate.getFullYear();
@@ -31,19 +61,26 @@ const SessionForm: React.FC = () => {
         setResidentId(rotationMatch.residentId);
       }
     }
-  }, [date, selectedUnitId, rotations]);
+  }, [date, selectedUnitId, rotations, editingSession]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || !topic || !residentId || !tutorId) return;
 
-    addSession({
+    const sessionData = {
       date: new Date(date).toISOString(),
       topic,
       residentId,
       tutorId,
-      status: 'Pendiente'
-    });
+      status: editingSession ? editingSession.status : 'Pendiente' as any
+    };
+
+    if (editingSession) {
+      updateSession(editingSession.id, sessionData);
+      clearEditing();
+    } else {
+      addSession(sessionData);
+    }
 
     setDate('');
     setTopic('');
@@ -54,7 +91,9 @@ const SessionForm: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h3 className="text-lg font-bold text-slate-800 mb-4">Programar Nueva Sesión</h3>
+      <h3 className="text-lg font-bold text-slate-800 mb-4">
+        {editingSession ? 'Editar Sesión Clínica' : 'Programar Nueva Sesión'}
+      </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -123,12 +162,24 @@ const SessionForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 flex gap-2">
+          {editingSession && (
+            <button
+              type="button"
+              onClick={clearEditing}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors cursor-pointer border border-slate-200"
+            >
+              Cancelar
+            </button>
+          )}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className={clsx(
+              "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors cursor-pointer",
+              editingSession ? "flex-1" : "w-full"
+            )}
           >
-            Guardar Sesión
+            {editingSession ? 'Actualizar Sesión' : 'Guardar Sesión'}
           </button>
         </div>
       </form>

@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Permitir obtener un perfil de residente por su ID exacto (e.g. email) a cualquiera.
+    // Esto es necesario para validar la contraseña al iniciar sesión antes de estar autenticado.
+    match /readers/{readerId} {
+      allow get: if true;
+      allow list: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Configuración inicial del sistema y colecciones principales
+    // Se permite la lectura a cualquier usuario (autenticado o no) para posibilitar el acceso
+    // de los perfiles de residente (que se validan mediante la colección /readers/).
+    // La escritura se restringe estrictamente a administradores autenticados mediante Firebase Auth.
+    match /config/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /liquidations/{liquidationId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /residents/{residentId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /rotations/{rotationId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /units/{unitId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /duties/{dutyId} {
+      // Lectura libre para residentes y coordinadores (autenticación por contraseña propia)
+      // Escritura solo para usuarios autenticados con Firebase Auth (administradores)
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
