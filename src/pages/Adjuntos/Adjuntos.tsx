@@ -242,17 +242,6 @@ const Adjuntos: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<Record<string, AttendingDayDoc>>({});
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const now = new Date();
   
   // Estados para filtros de resaltado
@@ -790,9 +779,10 @@ const Adjuntos: React.FC = () => {
             <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
             <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest animate-pulse">Cargando Cuadrante...</p>
           </div>
-        ) : isMobile ? (
-          /* VISTA MÓVIL (Carrusel Semanal + Lista de Tarjetas del Día Seleccionado) */
-          <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
+        ) : (
+          <>
+            {/* VISTA MÓVIL (Nativa CSS - visible en móvil y oculta en pantallas md o más grandes) */}
+            <div className="flex-grow flex flex-col min-h-0 bg-white dark:bg-slate-900 md:hidden">
             {/* Carrusel Deslizable Horizontalmente */}
             <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20">
               <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-none snap-x snap-mandatory">
@@ -917,10 +907,10 @@ const Adjuntos: React.FC = () => {
                 );
               })()}
             </div>
-          </div>
-        ) : (
-          /* VISTA CLÁSICA DESKTOP (Cuadrícula mensual de 7 columnas) */
-          <div className="p-3 w-full flex-1 flex flex-col justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
+            </div>
+
+            {/* VISTA DESKTOP (Nativa CSS - visible en 768px o más, oculta en móvil) */}
+            <div className="hidden md:flex p-3 w-full flex-1 flex flex-col justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
             <div className="w-full flex flex-col flex-1 min-h-0">
               
               {/* Cabecera de Días (L, M, X, J, V, S, D) */}
@@ -1047,7 +1037,8 @@ const Adjuntos: React.FC = () => {
 
             </div>
           </div>
-        )}
+        </>
+      )}
       </div>
 
       {/* MODAL DETALLADO DEL DÍA SELECCIONADO */}
