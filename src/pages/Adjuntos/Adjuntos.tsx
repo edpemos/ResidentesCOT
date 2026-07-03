@@ -252,40 +252,41 @@ const Adjuntos: React.FC = () => {
         const docs: Record<string, AttendingDayDoc> = {};
         
         querySnapshot.forEach((doc) => {
-          const data = doc.data() as AttendingDayDoc;
-          // Aplicar remapeo de nombres y unidades del lado del cliente para cambios inmediatos
-          if (data.schedule) {
-            data.schedule = data.schedule.map(s => {
-              const norm = normalizeName(s.name);
-              const finalName = mapNormalizedToFriendlyName(norm, s.name);
+          const rawData = doc.data() as AttendingDayDoc;
+          const mappedSchedule = (rawData.schedule || []).map(s => {
+            const norm = normalizeName(s.name);
+            const finalName = mapNormalizedToFriendlyName(norm, s.name);
 
-              let newUnit = (s.unit || '').trim();
-              
-              // Unificar las unidades relacionadas con Miembro Superior
-              const lowerUnit = newUnit.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-              if (
-                lowerUnit === 'mano' || 
-                lowerUnit === 'hombro' || 
-                lowerUnit === 'mano y codo' || 
-                lowerUnit === 'mano y hombro' ||
-                lowerUnit === 'miembro superior' ||
-                lowerUnit === 'miembros superiores'
-              ) {
-                newUnit = 'Miembros Superiores';
-              }
+            let newUnit = (s.unit || '').trim();
+            
+            // Unificar las unidades relacionadas con Miembro Superior
+            const lowerUnit = newUnit.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (
+              lowerUnit === 'mano' || 
+              lowerUnit === 'hombro' || 
+              lowerUnit === 'mano y codo' || 
+              lowerUnit === 'mano y hombro' ||
+              lowerUnit === 'miembro superior' ||
+              lowerUnit === 'miembros superiores'
+            ) {
+              newUnit = 'Miembros Superiores';
+            }
 
-              const lowerName = finalName.toLowerCase();
-              if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
-                  (lowerName.includes('jose') || lowerName.includes('josé')) && 
-                  (lowerName.includes('maria') || lowerName.includes('maría'))) {
-                newUnit = 'Trauma';
-              } else if (lowerName.includes('veronica') || lowerName.includes('verónica')) {
-                newUnit = 'Trauma';
-              }
-              return { ...s, name: finalName, unit: newUnit };
-            });
-          }
-          docs[doc.id] = data;
+            const lowerName = finalName.toLowerCase();
+            if ((lowerName.includes('perez') || lowerName.includes('pérez')) && 
+                (lowerName.includes('jose') || lowerName.includes('josé')) && 
+                (lowerName.includes('maria') || lowerName.includes('maría'))) {
+              newUnit = 'Trauma';
+            } else if (lowerName.includes('veronica') || lowerName.includes('verónica')) {
+              newUnit = 'Trauma';
+            }
+            return { ...s, name: finalName, unit: newUnit };
+          });
+
+          docs[doc.id] = {
+            ...rawData,
+            schedule: mappedSchedule
+          };
         });
 
         setScheduleData(docs);
