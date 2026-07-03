@@ -115,6 +115,7 @@ const Adjuntos: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<Record<string, AttendingDayDoc>>({});
+  const now = new Date();
   
   // Estados para filtros de resaltado
   const [highlightedNames, setHighlightedNames] = useState<Set<string>>(new Set());
@@ -461,18 +462,25 @@ const Adjuntos: React.FC = () => {
       </div>
 
       {/* BLOQUE DE CALENDARIO (ABAJO - ANCHO COMPLETO) */}
-      <div className="bg-[#f8fafc] dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-5 shadow-lg space-y-5">
+      <div className="bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-xs flex flex-col overflow-hidden">
         
         {/* Cabecera del calendario */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-teal-500" />
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-display uppercase tracking-widest">
-              Calendario del Servicio
-            </h3>
+        <div className="px-6 py-4 lg:px-4 lg:py-2.5 border-b border-slate-100 dark:border-slate-850 flex flex-col sm:flex-row items-center justify-between gap-4 lg:gap-2 bg-slate-50/50 dark:bg-slate-950/30">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-teal-50 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/30 text-teal-650 dark:text-teal-400 rounded-xl">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider font-heading truncate">
+                Calendario del Servicio
+              </h3>
+              <p className="text-[10px] lg:text-[9px] text-slate-505 dark:text-slate-400 font-medium mt-0.5">
+                Turnos, guardias y actividades programadas.
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
             {/* Solo Guardias Toggle */}
             <button
               onClick={() => setShowOnlyGuardias(!showOnlyGuardias)}
@@ -480,148 +488,163 @@ const Adjuntos: React.FC = () => {
                 'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer select-none',
                 showOnlyGuardias
                   ? 'bg-red-500 text-white border-red-650 shadow-md shadow-red-500/10'
-                  : 'bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-400 border-slate-250/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  : 'bg-white dark:bg-slate-900 text-slate-655 dark:text-slate-400 border-slate-250/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800'
               )}
             >
               <span className={clsx('w-2 h-2 rounded-full', showOnlyGuardias ? 'bg-white animate-pulse' : 'bg-red-500')} />
               Ver Solo Guardias
             </button>
-          </div>
-        </div>
 
-        {/* Tabulación de Meses Premium como en la captura */}
-        <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2 pt-1 border-b border-slate-200/50 dark:border-slate-800/30 no-scrollbar">
-          {monthTabs.map((tab, idx) => {
-            const isActive = tab.year === currentYearMonth.year && tab.month === currentYearMonth.month;
-            return (
-              <button
-                key={idx}
-                onClick={() => {
-                  setCurrentYearMonth({ year: tab.year, month: tab.month });
-                  setCurrentDate(`${tab.year}-${String(tab.month + 1).padStart(2, '0')}-01`);
-                }}
-                className={clsx(
-                  'px-3.5 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap cursor-pointer select-none border',
-                  isActive
-                    ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-md shadow-blue-500/15'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border-transparent bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-900/30'
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-2">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest animate-pulse">Cargando Cuadrante...</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            
-            {/* Cabecera de Días (L, M, X, J, V, S, D) */}
-            <div className="grid grid-cols-7 gap-2 text-center">
-              {DAYS_SHORT.map(d => (
-                <div key={d} className="text-xs font-black text-slate-400 dark:text-slate-500 py-1 uppercase tracking-widest">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Cuadrícula de Calendario Completa */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day, idx) => {
-                if (!day) {
-                  return <div key={`empty-${idx}`} className="aspect-[4/5] bg-slate-100/30 dark:bg-slate-900/10 rounded-2xl border border-transparent" />;
-                }
-
-                const hasData = !!scheduleData[day.dateKey];
-                const daySchedule = scheduleData[day.dateKey]?.schedule || [];
-                const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
-                
-                const isSelected = day.dateKey === currentDate;
-
-                // Si hay filtros, mostramos solo lo que coincide
-                const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
-                const activeShifts = showOnlyGuardias ? dayGuardias : daySchedule;
-                
-                const matchingShifts = hasActiveFilters
-                  ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
-                  : activeShifts;
-
-                // El fondo de la celda es grisáceo si no tiene turnos cargados
-                const isCellEmpty = matchingShifts.length === 0;
-
+            {/* Pestañas de Meses en cabecera */}
+            <div className="flex items-center gap-1 bg-slate-150 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 overflow-x-auto max-w-full">
+              {monthTabs.map((tab, idx) => {
+                const isActive = tab.year === currentYearMonth.year && tab.month === currentYearMonth.month;
                 return (
                   <button
-                    key={day.dateKey}
+                    key={idx}
                     onClick={() => {
-                      setCurrentDate(day.dateKey);
-                      setIsModalOpen(true);
+                      setCurrentYearMonth({ year: tab.year, month: tab.month });
+                      setCurrentDate(`${tab.year}-${String(tab.month + 1).padStart(2, '0')}-01`);
                     }}
                     className={clsx(
-                      'aspect-[4/5] p-2 rounded-2xl border flex flex-col justify-start items-stretch transition-all cursor-pointer text-left relative overflow-hidden group select-none',
-                      isSelected
-                        ? 'bg-white dark:bg-slate-900 border-orange-550 ring-2 ring-orange-550 shadow-lg shadow-orange-550/10'
-                        : isCellEmpty
-                          ? 'bg-[#f1f5f9]/40 dark:bg-slate-950/10 border-slate-200/40 dark:border-slate-800/20 opacity-60'
-                          : 'bg-white dark:bg-slate-900 border-slate-200/50 dark:border-slate-800/40 shadow-sm hover:shadow-md'
+                      "px-3 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer",
+                      isActive
+                        ? "bg-gradient-to-r from-teal-650 to-emerald-500 text-white shadow-2xs"
+                        : "text-slate-655 hover:bg-slate-250/50 hover:text-slate-850 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-white"
                     )}
                   >
-                    {/* Número del día */}
-                    <div className="flex justify-center pb-1">
-                      <span className={clsx(
-                        'text-xs font-black px-1.5 py-0.5 rounded-full leading-none text-center min-w-[20px]',
-                        isSelected 
-                          ? 'bg-red-650 text-white font-extrabold' 
-                          : 'text-slate-800 dark:text-slate-200'
-                      )}>
-                        {day.dayNumber}
-                      </span>
-                    </div>
-
-                    {/* Lista de Badges de Actividades */}
-                    <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-0.5 no-scrollbar mt-1">
-                      {matchingShifts.slice(0, 4).map((s, si) => {
-                        const { bg, label } = getShiftBadgeStyle(s.status, s.shift);
-                        const shortName = s.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 1).join('');
-                        
-                        return (
-                          <div key={si} className="flex flex-col items-stretch">
-                            {/* Badge del Turno */}
-                            <span className={clsx(
-                              "text-[8.5px] font-black uppercase rounded py-0.5 text-center truncate leading-none shadow-sm",
-                              bg
-                            )}>
-                              {label}
-                            </span>
-                            {/* Nombre del Cirujano (bajo el badge) */}
-                            {s.name && (
-                              <span className="text-[8.5px] font-bold text-slate-500 dark:text-slate-400 text-center block mt-0.5 leading-none truncate">
-                                ↳ {shortName}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {matchingShifts.length > 4 && (
-                        <span className="text-[7.5px] font-black text-slate-400 dark:text-slate-500 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
-                          +{matchingShifts.length - 4} más
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Indicador de actividad general */}
-                    {!showOnlyGuardias && !hasActiveFilters && hasData && dayGuardias.length === 0 && (
-                      <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-orange-400" />
-                    )}
+                    {tab.label.split(' ')[0]}
                   </button>
                 );
               })}
             </div>
+          </div>
+        </div>
 
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-2 bg-slate-50/10">
+            <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest animate-pulse">Cargando Cuadrante...</p>
+          </div>
+        ) : (
+          <div className="p-3 w-full flex-1 flex flex-col justify-between min-h-0 bg-slate-50/50 dark:bg-slate-950/20">
+            <div className="w-full flex flex-col flex-1 min-h-0">
+              
+              {/* Cabecera de Días (L, M, X, J, V, S, D) */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+                {DAYS_SHORT.map((d, index) => (
+                  <div 
+                    key={d} 
+                    className={clsx(
+                      "text-center py-1 text-xs font-black uppercase tracking-wider",
+                      index >= 5 ? "text-red-500" : "text-slate-450 dark:text-slate-500"
+                    )}
+                  >
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Cuadrícula de Calendario Completa */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {calendarDays.map((day, idx) => {
+                  if (!day) {
+                    return <div key={`empty-${idx}`} className="aspect-[4/5] bg-slate-100/30 dark:bg-slate-900/10 rounded-xl border border-transparent opacity-40" />;
+                  }
+
+                  const hasData = !!scheduleData[day.dateKey];
+                  const daySchedule = scheduleData[day.dateKey]?.schedule || [];
+                  const dayGuardias = daySchedule.filter(s => s.status === 'De Guardia' || s.shift === 'GPF');
+                  
+                  const isSelected = day.dateKey === currentDate;
+                  const isToday = day.dateKey === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                  
+                  const cellDayOfWeek = (idx % 7);
+                  const isWeekend = cellDayOfWeek === 5 || cellDayOfWeek === 6;
+                  const isRedDay = isWeekend;
+
+                  // Si hay filtros, mostramos solo lo que coincide
+                  const hasActiveFilters = highlightedNames.size > 0 || selectedUnits.size > 0;
+                  const activeShifts = showOnlyGuardias ? dayGuardias : daySchedule;
+                  
+                  const matchingShifts = hasActiveFilters
+                    ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
+                    : activeShifts;
+
+                  const isCellEmpty = matchingShifts.length === 0;
+
+                  return (
+                    <button
+                      key={day.dateKey}
+                      onClick={() => {
+                        setCurrentDate(day.dateKey);
+                        setIsModalOpen(true);
+                      }}
+                      className={clsx(
+                        "rounded-xl p-1.5 min-h-[7rem] flex flex-col justify-start items-stretch border transition-all duration-200 relative group text-left select-none shadow-xs",
+                        isCellEmpty
+                          ? "bg-[#f1f5f9]/20 dark:bg-slate-955/5 border-slate-200/30 dark:border-slate-800/20 opacity-70"
+                          : "bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-xs",
+                        isRedDay && !isCellEmpty && "bg-red-50/5 dark:bg-red-950/5",
+                        isToday && "ring-2 ring-teal-500 dark:ring-teal-400 border-transparent bg-teal-500/5 dark:bg-teal-950/10 shadow-sm",
+                        isSelected && "ring-2 ring-orange-500 dark:ring-orange-400 border-transparent bg-orange-500/5 dark:bg-orange-950/10 shadow-sm"
+                      )}
+                    >
+                      {/* Número del día */}
+                      <div className="flex justify-between items-center w-full">
+                        <span className={clsx(
+                          "text-xs font-black px-1.5 py-0.5 rounded-full leading-none text-center min-w-[20px] flex items-center justify-center",
+                          isToday 
+                            ? "bg-gradient-to-tr from-teal-650 to-emerald-505 text-white shadow-xs font-extrabold" 
+                            : isRedDay 
+                              ? "text-red-505" 
+                              : "text-slate-800 dark:text-slate-200"
+                        )}>
+                          {day.dayNumber}
+                        </span>
+                      </div>
+
+                      {/* Lista de Badges de Actividades */}
+                      <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-0.5 no-scrollbar mt-2">
+                        {matchingShifts.slice(0, 4).map((s, si) => {
+                          const { bg, label } = getShiftBadgeStyle(s.status, s.shift);
+                          const shortName = s.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 1).join('');
+                          
+                          return (
+                            <div key={si} className="flex flex-col items-stretch">
+                              {/* Badge del Turno */}
+                              <span className={clsx(
+                                "text-[8.5px] font-black uppercase rounded py-0.5 text-center truncate leading-none shadow-sm",
+                                bg
+                              )}>
+                                {label}
+                              </span>
+                              {/* Nombre del Cirujano (bajo el badge) */}
+                              {s.name && (
+                                <span className="text-[8.5px] font-bold text-slate-505 dark:text-slate-400 text-center block mt-0.5 leading-none truncate">
+                                  ↳ {shortName}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {matchingShifts.length > 4 && (
+                          <span className="text-[7.5px] font-black text-slate-400 dark:text-slate-500 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
+                            +{matchingShifts.length - 4} más
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Indicador de actividad general */}
+                      {!showOnlyGuardias && !hasActiveFilters && hasData && dayGuardias.length === 0 && (
+                        <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-orange-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+            </div>
           </div>
         )}
       </div>
