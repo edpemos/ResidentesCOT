@@ -22,7 +22,7 @@ jobs:
 
       - name: Instalar dependencias del script
         run: |
-          npm install playwright
+          npm install playwright xlsx firebase-admin
 
       - name: Instalar navegadores de Playwright
         run: npx playwright install chromium --with-deps
@@ -32,6 +32,11 @@ jobs:
           GUARDISCOPIO_EMAIL: ${{ secrets.GUARDISCOPIO_EMAIL }}
           GUARDISCOPIO_PASSWORD: ${{ secrets.GUARDISCOPIO_PASSWORD }}
         run: node scripts/download_schedule.js
+
+      - name: Procesar Excels y subir a Firestore
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/parse_and_upload.js
 
       - name: Subir excels como artefacto de la ejecución
         uses: actions/upload-artifact@v4

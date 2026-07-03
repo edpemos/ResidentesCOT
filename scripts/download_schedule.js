@@ -23,24 +23,49 @@ async function run() {
 
   try {
     console.log('🌐 Navegando a la página de login de Guardiscopio...');
-    await page.goto('https://www.guardiscopio.com/login/', { waitUntil: 'networkidle' });
+    await page.goto('https://www.guardiscopio.com/login/', { waitUntil: 'domcontentloaded' });
+
+    console.log('⏳ Esperando a que carguen los campos...');
+    await page.waitForSelector('input[placeholder="ejemplo@mail.com"], input[type="email"], input[name="email"]', { timeout: 10000 });
 
     console.log('✍️ Rellenando credenciales...');
-    // Rellenamos el email y contraseña usando selectores genéricos pero robustos
-    await page.fill('input[type="email"], input[name="email"], input[placeholder*="email" i], input[placeholder*="correo" i]', email);
+    await page.fill('input[placeholder="ejemplo@mail.com"], input[type="email"], input[name="email"]', email);
     await page.fill('input[type="password"], input[name="password"]', password);
 
     console.log('🔑 Enviando formulario...');
-    // Buscamos el botón de login/entrar/acceder
-    const loginButton = page.locator('button[type="submit"], input[type="submit"], button:has-text("Entrar"), button:has-text("Iniciar"), button:has-text("Acceder")');
+    const loginButton = page.locator('button[type="submit"], input[type="submit"], button:has-text("Iniciar sesión"), button:has-text("Entrar")');
     
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {}),
-      loginButton.click()
-    ]);
+    await loginButton.first().click();
 
-    console.log('✅ Login completado. Navegando al grupo...');
-    await page.goto('https://www.guardiscopio.com/group/', { waitUntil: 'networkidle' });
+    console.log('⏳ Esperando redirección al grupo...');
+    try {
+      // Intentamos esperar la redirección automática al grupo por 15 segundos
+      await page.waitForURL('**/group/**', { timeout: 15000 });
+      console.log('✅ Redirigido automáticamente al grupo.');
+    } catch (e) {
+      console.log('⚠️ Redirección automática no detectada. Forzando navegación manual...');
+      // Usamos waitUntil: 'commit' para que responda instantáneamente en cuanto el servidor devuelva el primer byte
+      await page.goto('https://www.guardiscopio.com/group/', { waitUntil: 'commit', timeout: 15000 }).catch(() => {});
+    }
+
+    // Esperamos a que el spinner de carga de la tabla desaparezca para que los botones sean interactivos
+    console.log('⏳ Aceptando el aviso de cookies...');
+    const cookieBtn = page.locator('button:has-text("Estoy de acuerdo"), a:has-text("Estoy de acuerdo")');
+    if (await cookieBtn.count() > 0) {
+      await cookieBtn.first().click();
+      console.log('✅ Cookies aceptadas.');
+    }
+
+    console.log('⏳ Esperando a que carguen los datos de la planificación (15s)...');
+    await page.waitForTimeout(15000); 
+
+    try {
+      const loadedScreenshot = path.resolve('./group_loaded.png');
+      await page.screenshot({ path: loadedScreenshot });
+      console.log(`📸 Captura de la página cargada guardada en: ${loadedScreenshot}`);
+    } catch (e) {
+      console.error('No se pudo tomar la captura de pantalla cargada:', e);
+    }
 
     // Directorio donde guardaremos los archivos Excel descargados
     const downloadDir = path.resolve('./downloads');
@@ -54,16 +79,11 @@ async function run() {
 
       if (i > 0) {
         console.log('➡️ Navegando al siguiente mes...');
-        // Buscamos botones habituales para avanzar de mes en calendarios/pizarras:
-        // ej. botón con flecha a la derecha, botón con texto "Siguiente", ">", etc.
         const nextMonthBtn = page.locator('button:has-text("Siguiente"), button:has-text(">"), .next-month, [aria-label*="siguiente" i], [class*="next" i]');
         if (await nextMonthBtn.count() > 0) {
-          await Promise.all([
-            page.waitForLoadState('networkidle'),
-            nextMonthBtn.first().click()
-          ]);
-          // Esperamos un momento para que se renderice la nueva tabla
-          await page.waitForTimeout(2000);
+          await nextMonthBtn.first().click();
+          // Esperamos 3 segundos para que se renderice la nueva tabla
+          await page.waitForTimeout(3000);
         } else {
           console.warn('⚠️ No se ha encontrado un botón obvio para avanzar de mes. Es posible que el selector necesite afinarse.');
         }
