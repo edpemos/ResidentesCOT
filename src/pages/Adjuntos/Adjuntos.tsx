@@ -120,6 +120,18 @@ const getShiftBadgeClasses = (status: string) => {
   }
 };
 
+// Orden de prioridad dentro de cada día:
+//   0 → Guardia  (GPF / De Guardia)   ← primero
+//   1 → Planta   (PLA / Planta)        ← segundo
+//   2 → Todo lo demás (quirófanos, consultas, cursos…)
+//   3 → Localizado (GLO / Localizado)  ← siempre al final
+const shiftPriority = (s: AttendingShift): number => {
+  if (s.status === 'De Guardia' || s.shift === 'GPF') return 0;
+  if (s.status === 'Planta'     || s.shift === 'PLA') return 1;
+  if (s.status === 'Localizado' || s.shift === 'GLO') return 3;
+  return 2;
+};
+
 const Adjuntos: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -332,7 +344,7 @@ const Adjuntos: React.FC = () => {
       });
     }
 
-    return filtered;
+    return [...filtered].sort((a, b) => shiftPriority(a) - shiftPriority(b));
   }, [scheduleData, currentDate, showOnlyGuardias, showDiferida, highlightedNames, selectedUnits]);
 
   return (
@@ -636,14 +648,8 @@ const Adjuntos: React.FC = () => {
                     ? activeShifts.filter(s => highlightedNames.has(s.name) || (s.unit && selectedUnits.has(s.unit)))
                     : activeShifts;
 
-                  // Priorizar las guardias (De Guardia / GPF) para que siempre salgan arriba del todo en la celda
-                  const matchingShifts = [...filteredShifts].sort((a, b) => {
-                    const aIsGuardia = a.status === 'De Guardia' || a.shift === 'GPF';
-                    const bIsGuardia = b.status === 'De Guardia' || b.shift === 'GPF';
-                    if (aIsGuardia && !bIsGuardia) return -1;
-                    if (!aIsGuardia && bIsGuardia) return 1;
-                    return 0;
-                  });
+                  // Ordenar: 1º Guardia, 2º Planta, 3º resto, 4º Localizado
+                  const matchingShifts = [...filteredShifts].sort((a, b) => shiftPriority(a) - shiftPriority(b));
 
                   const isCellEmpty = matchingShifts.length === 0;
 
