@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Users, Calendar, Sparkles, AlertCircle, Loader2, User, X } from 'lucide-react';
+import { Calendar, AlertCircle, Loader2, User, X } from 'lucide-react';
 import clsx from 'clsx';
 
 interface AttendingShift {
@@ -184,6 +184,7 @@ const Adjuntos: React.FC = () => {
   // Estados de apertura de desplegables de filtros
   const [unitsOpen, setUnitsOpen] = useState(false);
   const [namesOpen, setNamesOpen] = useState(false);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
   // Cargar datos de Firestore para el mes seleccionado
   useEffect(() => {
@@ -369,43 +370,32 @@ const Adjuntos: React.FC = () => {
   }, [scheduleData, currentDate, showOnlyGuardias, showDiferida, highlightedNames, selectedUnits]);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full max-w-[98%] xl:max-w-[96%] mx-auto px-2 sm:px-4 pb-10">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500 w-full max-w-[98%] xl:max-w-[96%] mx-auto px-2 sm:px-4 pb-10">
       
-      {/* Banner de Bienvenida */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-teal-900 via-teal-950 to-slate-900 border border-teal-900/35 rounded-3xl p-5 shadow-xl">
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-teal-500/5 blur-[80px] pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/25 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-              <Sparkles className="w-3 h-3" />
-              Sincronización Guardiscopio
-            </div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight font-display">
-              Planificación de Adjuntos
-            </h2>
-            <p className="text-slate-350 text-xs leading-relaxed max-w-xl">
-              Filtra por Unidad o Médico para auditar y consultar las actividades. El calendario inferior se actualizará instantáneamente.
-            </p>
-          </div>
-          <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-teal-950 border border-teal-900/40 text-emerald-400 shadow-xl shadow-teal-950/50">
-            <Users className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
+      {/* BLOQUE DE FILTROS COLAPSABLE */}
+      <div className="bg-white dark:bg-slate-900/55 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black uppercase text-teal-650 dark:text-teal-400 bg-teal-555/10 dark:bg-teal-400/5 border border-teal-500/20 hover:bg-teal-500/15 dark:hover:bg-teal-400/10 transition-all cursor-pointer select-none"
+            >
+              <span>Filtros de Búsqueda</span>
+              <span>{isFiltersExpanded ? '▲ Colapsar' : '▼ Expandir'}</span>
+            </button>
 
-      {/* BLOQUE DE FILTROS (ARRIBA) */}
-      <div className="bg-white dark:bg-slate-900/55 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-5 shadow-lg space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/60">
-          <div>
-            <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100 uppercase tracking-widest flex items-center gap-1.5 font-display">
-              <Users className="w-4 h-4 text-teal-500" />
-              Filtros Desplegables
-            </h4>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-              Filtra por Unidad o por Médico para aislar su planificación del mes directamente en el calendario.
-            </p>
+            {/* Resumen de filtros activos cuando está colapsado */}
+            {!isFiltersExpanded && (highlightedNames.size > 0 || selectedUnits.size > 0) && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider">Activos:</span>
+                {Array.from(selectedUnits).map(u => (
+                  <span key={u} className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-655 dark:text-teal-400 text-[9px] font-black border border-teal-500/20">{u}</span>
+                ))}
+                {Array.from(highlightedNames).map(n => (
+                  <span key={n} className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-655 dark:text-emerald-450 text-[9px] font-black border border-emerald-500/20">{n.replace(/(Dr.|Dra.)\s*/g, '')}</span>
+                ))}
+              </div>
+            )}
           </div>
           
           {(highlightedNames.size > 0 || selectedUnits.size > 0) && (
@@ -417,6 +407,9 @@ const Adjuntos: React.FC = () => {
             </button>
           )}
         </div>
+
+        {isFiltersExpanded && (
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 animate-in fade-in duration-200">
 
         {uniqueNames.length === 0 && uniqueUnits.length === 0 ? (
           <p className="text-xs text-slate-400 dark:text-slate-550 italic">No hay profesionales disponibles en este mes.</p>
@@ -527,6 +520,8 @@ const Adjuntos: React.FC = () => {
 
           </div>
         )}
+      </div>
+      )}
       </div>
 
       {/* BLOQUE DE CALENDARIO (ABAJO - ANCHO COMPLETO) */}
@@ -682,7 +677,7 @@ const Adjuntos: React.FC = () => {
                         setIsModalOpen(true);
                       }}
                       className={clsx(
-                        "rounded-xl p-1.5 min-h-[7rem] flex flex-col justify-start items-stretch border transition-all duration-200 relative group text-left select-none shadow-xs",
+                        "rounded-xl p-1 h-[6.5rem] overflow-hidden flex flex-col justify-start items-stretch border transition-all duration-200 relative group text-left select-none shadow-xs",
                         isCellEmpty
                           ? "bg-[#f1f5f9]/20 dark:bg-slate-955/5 border-slate-200/30 dark:border-slate-800/20 opacity-70"
                           : "bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-xs",
@@ -694,7 +689,7 @@ const Adjuntos: React.FC = () => {
                       {/* Número del día */}
                       <div className="flex justify-between items-center w-full">
                         <span className={clsx(
-                          "text-xs font-black px-1.5 py-0.5 rounded-full leading-none text-center min-w-[20px] flex items-center justify-center",
+                          "text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none text-center min-w-[18px] flex items-center justify-center",
                           isToday 
                             ? "bg-gradient-to-tr from-teal-650 to-emerald-505 text-white shadow-xs font-extrabold" 
                             : isRedDay 
@@ -706,7 +701,7 @@ const Adjuntos: React.FC = () => {
                       </div>
 
                       {/* Lista de Badges de Actividades */}
-                      <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-0.5 no-scrollbar mt-2">
+                      <div className="flex-1 flex flex-col gap-0.5 overflow-hidden pr-0.5 mt-1">
                         {matchingShifts.slice(0, 4).map((s, si) => {
                           const { bg, label } = getShiftBadgeStyle(s.status, s.shift);
                           const shortName = s.name.replace(/(Dr\.|Dra\.)\s*/g, '').split(' ').slice(0, 1).join('');
@@ -715,14 +710,14 @@ const Adjuntos: React.FC = () => {
                             <div key={si} className="flex flex-col items-stretch">
                               {/* Badge del Turno */}
                               <span className={clsx(
-                                "text-[8.5px] font-black uppercase rounded py-0.5 text-center truncate leading-none shadow-sm",
+                                "text-[7.5px] font-black uppercase rounded py-px text-center truncate leading-tight shadow-2xs",
                                 bg
                               )}>
                                 {label}
                               </span>
                               {/* Nombre del Cirujano (bajo el badge) */}
                               {s.name && (
-                                <span className="text-[8.5px] font-bold text-slate-505 dark:text-slate-400 text-center block mt-0.5 leading-none truncate">
+                                <span className="text-[7.5px] font-bold text-slate-505 dark:text-slate-400 text-center block mt-0.5 leading-none truncate">
                                   ↳ {shortName}
                                 </span>
                               )}
@@ -730,7 +725,7 @@ const Adjuntos: React.FC = () => {
                           );
                         })}
                         {matchingShifts.length > 4 && (
-                          <span className="text-[7.5px] font-black text-slate-400 dark:text-slate-500 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
+                          <span className="text-[6.5px] font-black text-slate-400 dark:text-slate-550 text-center block w-full uppercase tracking-wider py-0.5 bg-slate-100 dark:bg-slate-850 rounded leading-none">
                             +{matchingShifts.length - 4} más
                           </span>
                         )}
