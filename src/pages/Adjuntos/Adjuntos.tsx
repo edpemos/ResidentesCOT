@@ -688,7 +688,7 @@ const Adjuntos: React.FC = () => {
                   Turnos, guardias y actividades programadas.
                 </p>
                 <span className="text-[7.5px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 font-black px-1.5 py-0.5 rounded uppercase leading-none">
-                  Build v2.6 (N-CSS Activo)
+                  Build v2.6.1 (N-CSS) — W: {typeof window !== 'undefined' ? window.innerWidth : 0}px
                 </span>
               </div>
             </div>
