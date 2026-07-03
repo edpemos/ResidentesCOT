@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
-  Mail, ClipboardList, Settings, LogOut, Sun, Moon, X 
+  Mail, ClipboardList, Settings, LogOut, Sun, Moon, X, Users 
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/authStore';
@@ -98,6 +98,28 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, isDark, onTo
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* General Nav Items */}
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-[9px] font-black uppercase tracking-widest text-teal-500 px-2 mb-2">
+            Planificación
+          </p>
+          <div className="space-y-1">
+            <NavLink
+              to="/adjuntos"
+              onClick={onClose}
+              className={({ isActive }) => clsx(
+                'flex items-center gap-4 px-4 py-4 rounded-xl text-base font-bold transition-all',
+                isActive
+                  ? 'bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-lg'
+                  : 'text-teal-100 hover:bg-teal-900/40 active:bg-teal-800/40'
+              )}
+            >
+              <Users className="w-6 h-6 shrink-0" aria-hidden="true" />
+              Adjuntos
+            </NavLink>
+          </div>
         </div>
 
         {/* Admin nav items */}

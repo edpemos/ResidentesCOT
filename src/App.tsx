@@ -13,6 +13,7 @@ const Home           = lazy(() => import('./pages/Home/Home'));
 const DutiesPlanner  = lazy(() => import('./pages/Duties/DutiesPlanner'));
 const VacationManager     = lazy(() => import('./pages/Vacations/VacationManager'));
 const MonthlyLiquidations = lazy(() => import('./pages/Liquidations/MonthlyLiquidations'));
+const Adjuntos            = lazy(() => import('./pages/Adjuntos/Adjuntos'));
 
 // Pantalla de carga mientras se descarga el chunk de la página
 const PageLoader: React.FC = () => (
@@ -41,6 +42,7 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/duties"    element={<DutiesPlanner />} />
               <Route path="/sessions"  element={<Sessions />} />
+              <Route path="/adjuntos"  element={<Adjuntos />} />
               
               {/* Admin Only Routes */}
               <Route element={<ProtectedRoute requiredRole="admin" />}>

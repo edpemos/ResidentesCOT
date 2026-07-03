@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Home, LayoutDashboard, CalendarCheck, Megaphone, Mail, ClipboardList, Settings } from 'lucide-react';
+import { Home, LayoutDashboard, CalendarCheck, Megaphone, Mail, ClipboardList, Settings, Users } from 'lucide-react';
 
 const SECTION_MAP: Record<string, { label: string; icon: React.ElementType; description: string }> = {
   '/home':         { label: 'Inicio',                 icon: Home,           description: 'Vista general del mes y rotaciones' },
@@ -10,6 +10,7 @@ const SECTION_MAP: Record<string, { label: string; icon: React.ElementType; desc
   '/vacations':    { label: 'Supervisión Vacaciones',  icon: Mail,           description: 'Gestión de solicitudes de vacaciones' },
   '/liquidations': { label: 'Liquidación Mensual',    icon: ClipboardList,  description: 'Historial y cierre de meses' },
   '/settings':     { label: 'Ajustes',                icon: Settings,       description: 'Configuración de residentes y unidades' },
+  '/adjuntos':     { label: 'Adjuntos',               icon: Users,          description: 'Planificación de cirujanos adjuntos' },
 };
 
 const SectionHeader: React.FC = () => {

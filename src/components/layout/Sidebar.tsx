@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, X, Settings, User, LogOut, Sun, Moon, Home, CalendarCheck, Mail, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Megaphone, X, Settings, User, LogOut, Sun, Moon, Home, CalendarCheck, Mail, ClipboardList, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/authStore';
 import { AppLogo } from '../common/AppLogo';
@@ -21,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isDark = false
     { name: 'Pizarra de Rotaciones', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Guardias y Tardes', path: '/duties', icon: CalendarCheck },
     { name: 'Sesiones Semanales', path: '/sessions', icon: Megaphone },
+    { name: 'Adjuntos', path: '/adjuntos', icon: Users },
   ];
 
   if (isAdmin) {
