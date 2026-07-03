@@ -30,6 +30,9 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     try {
       const { adminEmails } = useAuthStore.getState();
       const mockMode = import.meta.env.VITE_FIREBASE_API_KEY === 'dummy_api_key' || !import.meta.env.VITE_FIREBASE_API_KEY;
@@ -38,13 +41,13 @@ const Login: React.FC = () => {
       if (mockMode) {
         const stored = localStorage.getItem('mock-readers');
         const readers = stored ? JSON.parse(stored) : [];
-        const matched = readers.find((r: any) => r.username.toLowerCase() === email.toLowerCase() && r.password === password);
+        const matched = readers.find((r: any) => r.username.toLowerCase() === cleanEmail && r.password === cleanPassword);
         if (matched) {
           const role = matched.role || 'reader';
-          localStorage.setItem('session-reader', email.toLowerCase());
+          localStorage.setItem('session-reader', cleanEmail);
           localStorage.setItem('session-reader-role', role);
           useAuthStore.setState({
-            user: { uid: 'reader-' + email, email, displayName: email } as any,
+            user: { uid: 'reader-' + cleanEmail, email: cleanEmail, displayName: cleanEmail } as any,
             role,
             isLoading: false,
             needsSetup: false
@@ -57,38 +60,48 @@ const Login: React.FC = () => {
         const { db } = await import('../../services/firebase');
         try {
           // Usamos getDocFromServer para saltarnos el caché local y forzar lectura desde red
-          const docRef = doc(db, 'readers', email.toLowerCase());
+          const docRef = doc(db, 'readers', cleanEmail);
           const docSnap = await getDocFromServer(docRef);
-          if (docSnap.exists() && docSnap.data().password === password) {
-            const role = docSnap.data().role || 'reader';
-            localStorage.setItem('session-reader', email.toLowerCase());
-            localStorage.setItem('session-reader-role', role);
-            useAuthStore.setState({
-              user: { uid: 'reader-' + email, email, displayName: email } as any,
-              role,
-              isLoading: false,
-              needsSetup: false
-            });
-            return;
+          if (docSnap.exists()) {
+            if (docSnap.data().password === cleanPassword) {
+              const role = docSnap.data().role || 'reader';
+              localStorage.setItem('session-reader', cleanEmail);
+              localStorage.setItem('session-reader-role', role);
+              useAuthStore.setState({
+                user: { uid: 'reader-' + cleanEmail, email: cleanEmail, displayName: cleanEmail } as any,
+                role,
+                isLoading: false,
+                needsSetup: false
+              });
+              return;
+            } else {
+              // Contraseña incorrecta para el lector
+              setError('Contraseña incorrecta.');
+              setIsSubmitting(false);
+              return;
+            }
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Error verifying reader in firestore:', e);
+          setError(`Error de conexión con la base de datos: ${e.message || e}`);
+          setIsSubmitting(false);
+          return;
         }
       }
       
       // MOCK LOGIN if Firebase is not configured
       if (mockMode) {
         setTimeout(() => {
-          const isAdmin = adminEmails.map(e => e.toLowerCase()).includes(email.toLowerCase());
+          const isAdmin = adminEmails.map(e => e.toLowerCase()).includes(cleanEmail);
           useAuthStore.setState({
-            user: { uid: isAdmin ? 'mock-admin' : 'mock-reader', email, emailVerified: true } as any,
+            user: { uid: isAdmin ? 'mock-admin' : 'mock-reader', email: cleanEmail, emailVerified: true } as any,
             role: isAdmin ? 'admin' : 'reader',
           });
         }, 800);
         return;
       }
 
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
     } catch (err: any) {
       setError('Credenciales incorrectas o usuario no encontrado.');
       setIsSubmitting(false);
