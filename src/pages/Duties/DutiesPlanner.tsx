@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   Check,
   Clock,
-  Lock
+  Lock,
+  ChevronDown,
+  Info
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -87,6 +89,19 @@ const DutiesPlanner: React.FC = () => {
   const [mobileTab, setMobileTab] = useState<'mis-turnos' | 'quien-esta'>('mis-turnos');
   const [selectedResidentId, setSelectedResidentId] = useState<string>('');
   const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [expandedDaysMobile, setExpandedDaysMobile] = useState<Set<string>>(new Set());
+
+  const toggleDayExpansionMobile = (key: string) => {
+    setExpandedDaysMobile(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   // Detector híbrido de dispositivo móvil
   useEffect(() => {
@@ -843,10 +858,12 @@ const DutiesPlanner: React.FC = () => {
             return (
               <div 
                 key={dayNum}
+                onClick={() => toggleDayExpansionMobile(dateStr)}
                 className={clsx(
-                  "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl shadow-2xs hover:border-slate-350 dark:hover:border-slate-700 transition-all",
+                  "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl shadow-2xs hover:border-slate-350 dark:hover:border-slate-700 transition-all cursor-pointer select-none",
                   duty?.type === 'guardia' && "ring-1 ring-red-500/20 bg-red-50/[0.02] dark:bg-red-950/[0.02]",
-                  duty?.type === 'rucot' && "ring-1 ring-blue-500/20 bg-blue-50/[0.02] dark:bg-blue-950/[0.02]"
+                  duty?.type === 'rucot' && "ring-1 ring-blue-500/20 bg-blue-50/[0.02] dark:bg-blue-950/[0.02]",
+                  expandedDaysMobile.has(dateStr) && "bg-slate-50/20 dark:bg-slate-800/10 border-slate-300 dark:border-slate-750"
                 )}
               >
                 {/* Date bubble */}
@@ -878,10 +895,23 @@ const DutiesPlanner: React.FC = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Contiene observaciones" />
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                  <p className={clsx(
+                    "text-[11px] text-slate-500 dark:text-slate-400 font-medium transition-all break-words",
+                    expandedDaysMobile.has(dateStr) ? "whitespace-normal" : "truncate"
+                  )}>
                     {desc}
                   </p>
                 </div>
+
+                {/* Chevron expand indicator */}
+                {duty?.notes && (
+                  <div className="shrink-0 text-slate-400 dark:text-slate-500">
+                    <ChevronDown className={clsx(
+                      "w-4 h-4 transition-transform duration-200",
+                      expandedDaysMobile.has(dateStr) && "rotate-180 text-teal-500"
+                    )} />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -941,38 +971,114 @@ const DutiesPlanner: React.FC = () => {
     const dayDuties = duties.filter(d => d.date === dateStr && d.residentId !== 'holiday' && d.residentId !== 'mandatory-guard' && d.residentId !== 'mandatory-rucot');
     
     // Agrupación
-    const guardias: string[] = [];
-    const rucots: string[] = [];
-    const tardes: string[] = [];
-    const salientes: string[] = [];
-    const otros: { name: string; label: string; bg: string }[] = [];
+    const guardias: { id: string; name: string; notes?: string }[] = [];
+    const rucots: { id: string; name: string; notes?: string }[] = [];
+    const tardes: { id: string; name: string; notes?: string }[] = [];
+    const salientes: { id: string; name: string; notes?: string }[] = [];
+    const otros: { id: string; name: string; label: string; bg: string; notes?: string }[] = [];
 
     sortedResidents.forEach(res => {
       const duty = dayDuties.find(d => d.residentId === res.id);
       const fullName = `${res.firstName} ${res.lastName}`;
       if (duty) {
+        const item = { id: res.id, name: fullName, notes: duty.notes };
         if (duty.type === 'guardia') {
-          guardias.push(fullName);
+          guardias.push(item);
         } else if (duty.type === 'rucot') {
-          rucots.push(fullName);
+          rucots.push(item);
         } else if (duty.type === 'rucot-guardia') {
-          guardias.push(fullName);
-          rucots.push(fullName);
+          guardias.push(item);
+          rucots.push(item);
         } else if (duty.type === 'tarde' || duty.type === 'tarde-especial') {
-          tardes.push(fullName);
+          tardes.push(item);
         } else if (duty.type === 'saliente' || duty.type === 'saliente-manual') {
-          salientes.push(fullName);
+          salientes.push(item);
         } else if (duty.type === 'curso') {
-          otros.push({ name: fullName, label: 'Curso (C)', bg: 'bg-purple-500' });
+          otros.push({ id: res.id, name: fullName, label: 'Curso (C)', bg: 'bg-purple-500', notes: duty.notes });
         } else if (duty.type === 'vacaciones') {
-          otros.push({ name: fullName, label: 'Vacaciones (V)', bg: 'bg-teal-600' });
+          otros.push({ id: res.id, name: fullName, label: 'Vacaciones (V)', bg: 'bg-teal-600', notes: duty.notes });
         } else if (duty.type === 'libre') {
-          otros.push({ name: fullName, label: 'Libre (L)', bg: 'bg-slate-500' });
+          otros.push({ id: res.id, name: fullName, label: 'Libre (L)', bg: 'bg-slate-500', notes: duty.notes });
         }
       }
     });
 
     const isGroupEmpty = guardias.length === 0 && rucots.length === 0 && tardes.length === 0 && salientes.length === 0 && otros.length === 0;
+
+    const renderResidentItemMobile = (resItem: { id: string; name: string; notes?: string }) => {
+      const expandedKey = `${resItem.id}_${dateStr}`;
+      const isExpanded = expandedDaysMobile.has(expandedKey);
+      
+      return (
+        <div key={resItem.id} className="flex flex-col">
+          <div 
+            onClick={() => resItem.notes && toggleDayExpansionMobile(expandedKey)}
+            className={clsx(
+              "flex items-center justify-between text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2.5 rounded-xl border border-slate-200/40 dark:border-slate-800/40 select-none transition-all",
+              resItem.notes && "cursor-pointer active:bg-slate-100/50 dark:active:bg-slate-850/50"
+            )}
+          >
+            <span className="truncate">{resItem.name}</span>
+            {resItem.notes && (
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" title="Contiene observaciones" />
+                <ChevronDown className={clsx(
+                  "w-3.5 h-3.5 text-slate-450 transition-transform duration-205",
+                  isExpanded && "rotate-180 text-teal-500"
+                )} />
+              </div>
+            )}
+          </div>
+          
+          {resItem.notes && isExpanded && (
+            <div className="mt-1 bg-amber-50/30 dark:bg-amber-950/10 border border-amber-200/40 dark:border-amber-900/25 p-2 rounded-xl text-[10.5px] text-amber-850 dark:text-amber-350 font-medium break-words animate-in fade-in slide-in-from-top-1 duration-200 flex items-start gap-1">
+              <Info className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+              <span>{resItem.notes}</span>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const renderOtroResidentItemMobile = (resItem: { id: string; name: string; label: string; bg: string; notes?: string }) => {
+      const expandedKey = `${resItem.id}_${dateStr}`;
+      const isExpanded = expandedDaysMobile.has(expandedKey);
+      
+      return (
+        <div key={resItem.id} className="flex flex-col">
+          <div 
+            onClick={() => resItem.notes && toggleDayExpansionMobile(expandedKey)}
+            className={clsx(
+              "flex items-center justify-between text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2.5 rounded-xl border border-slate-200/40 dark:border-slate-800/40 select-none transition-all",
+              resItem.notes && "cursor-pointer active:bg-slate-100/50 dark:active:bg-slate-850/50"
+            )}
+          >
+            <span className="truncate">{resItem.name}</span>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <span className={clsx("text-[8px] font-black text-white px-1.5 py-0.5 rounded uppercase leading-none tracking-wider shadow-3xs", resItem.bg)}>
+                {resItem.label}
+              </span>
+              {resItem.notes && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" title="Contiene observaciones" />
+                  <ChevronDown className={clsx(
+                    "w-3.5 h-3.5 text-slate-450 transition-transform duration-205",
+                    isExpanded && "rotate-180 text-teal-500"
+                  )} />
+                </>
+              )}
+            </div>
+          </div>
+          
+          {resItem.notes && isExpanded && (
+            <div className="mt-1 bg-amber-50/30 dark:bg-amber-950/10 border border-amber-200/40 dark:border-amber-900/25 p-2 rounded-xl text-[10.5px] text-amber-850 dark:text-amber-350 font-medium break-words animate-in fade-in slide-in-from-top-1 duration-200 flex items-start gap-1">
+              <Info className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+              <span>{resItem.notes}</span>
+            </div>
+          )}
+        </div>
+      );
+    };
 
     return (
       <div className="flex flex-col space-y-3.5">
@@ -996,13 +1102,9 @@ const DutiesPlanner: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-red-500" />
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Guardias ({guardias.length})</h3>
                   </div>
-                  <ul className="grid grid-cols-2 gap-2">
-                    {guardias.map(name => (
-                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-col gap-2">
+                    {guardias.map(item => renderResidentItemMobile(item))}
+                  </div>
                 </div>
               )}
 
@@ -1013,13 +1115,9 @@ const DutiesPlanner: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-blue-600" />
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">RUCOTs ({rucots.length})</h3>
                   </div>
-                  <ul className="grid grid-cols-2 gap-2">
-                    {rucots.map(name => (
-                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-col gap-2">
+                    {rucots.map(item => renderResidentItemMobile(item))}
+                  </div>
                 </div>
               )}
 
@@ -1030,13 +1128,9 @@ const DutiesPlanner: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-orange-500" />
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Tardes ({tardes.length})</h3>
                   </div>
-                  <ul className="grid grid-cols-2 gap-2">
-                    {tardes.map(name => (
-                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-col gap-2">
+                    {tardes.map(item => renderResidentItemMobile(item))}
+                  </div>
                 </div>
               )}
 
@@ -1047,13 +1141,9 @@ const DutiesPlanner: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Salientes ({salientes.length})</h3>
                   </div>
-                  <ul className="grid grid-cols-2 gap-2">
-                    {salientes.map(name => (
-                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-col gap-2">
+                    {salientes.map(item => renderResidentItemMobile(item))}
+                  </div>
                 </div>
               )}
 
@@ -1064,16 +1154,9 @@ const DutiesPlanner: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-slate-500" />
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Otros Turnos ({otros.length})</h3>
                   </div>
-                  <ul className="flex flex-col space-y-2">
-                    {otros.map(item => (
-                      <li key={item.name} className="flex items-center justify-between text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
-                        <span>{item.name}</span>
-                        <span className={clsx("text-[8px] font-black text-white px-1.5 py-0.5 rounded uppercase leading-none tracking-wider shadow-3xs", item.bg)}>
-                          {item.label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-col gap-2">
+                    {otros.map(item => renderOtroResidentItemMobile(item))}
+                  </div>
                 </div>
               )}
             </>
