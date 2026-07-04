@@ -91,22 +91,22 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Optimización móvil para la Pizarra de Guardias */
+/* Optimización móvil para la Pizarra de Guardias (Muestra justo 7 días en pantalla) */
 @media (max-width: 1023px) {
   .mobile-duties-table {
-    width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
-    min-width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
-    max-width: calc(200px + var(--days-count, 31) * 0.4875 * (100vw - 200px) / 3.5) !important;
+    width: calc(100px + var(--days-count, 31) * (100vw - 100px) / 7) !important;
+    min-width: calc(100px + var(--days-count, 31) * (100vw - 100px) / 7) !important;
+    max-width: calc(100px + var(--days-count, 31) * (100vw - 100px) / 7) !important;
   }
   .mobile-duties-name-col {
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
   }
   .mobile-duties-day-col {
-    width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
-    min-width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
-    max-width: calc(0.4875 * (100vw - 200px) / 3.5) !important;
+    width: calc((100vw - 100px) / 7) !important;
+    min-width: calc((100vw - 100px) / 7) !important;
+    max-width: calc((100vw - 100px) / 7) !important;
   }
 }
 

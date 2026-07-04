@@ -104,6 +104,14 @@ const DutiesPlanner: React.FC = () => {
     });
   };
 
+  const displayLastName = (lastName: string) => {
+    const lower = lastName.toLowerCase();
+    if (lower.includes('borbolla') || lower.includes('garcia de la borbolla')) {
+      return "G.Borbolla";
+    }
+    return lastName;
+  };
+
   // Detector híbrido de dispositivo móvil
   useEffect(() => {
     const checkMobile = () => {
@@ -1414,7 +1422,7 @@ const DutiesPlanner: React.FC = () => {
                             /* VISTA SIMPLIFICADA MÓVIL (Apellido + Año) */
                             <div className="min-w-0 flex-1 flex items-center justify-between gap-1 w-full px-1">
                               <p className="text-[12px] font-black text-slate-800 dark:text-slate-200 truncate leading-tight" title={`${res.firstName} ${res.lastName}`}>
-                                {res.lastName}
+                                {displayLastName(res.lastName)}
                               </p>
                               <span className="inline-block text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-655 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/30 font-mono shrink-0 select-none leading-none tracking-wider">
                                 {res.year}
