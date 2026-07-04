@@ -2,8 +2,10 @@ name: Descarga de Guardias Guardiscopio
 
 on:
   schedule:
-    # Corre a las 02:00 UTC (04:00 hora de España) todos los días
+    # Corre a las 02:00 UTC (04:00h hora de España, verano CEST)
     - cron: '0 2 * * *'
+    # Corre a las 14:00 UTC (16:00h hora de España, verano CEST)
+    - cron: '0 14 * * *'
   workflow_dispatch: # Permite ejecución manual desde la pestaña de Actions en GitHub
 
 jobs:
