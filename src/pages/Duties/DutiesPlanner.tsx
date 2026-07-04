@@ -82,6 +82,54 @@ const DutiesPlanner: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(planningMonths[0]);
   const [activeCell, setActiveCell] = useState<{ residentId: string; date: string } | null>(null);
 
+  // Estados Responsivos e Interfaz Móvil de Guardias
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'mis-turnos' | 'quien-esta'>('mis-turnos');
+  const [selectedResidentId, setSelectedResidentId] = useState<string>('');
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+
+  // Detector híbrido de dispositivo móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      const ua = navigator.userAgent.toLowerCase();
+      const isMobileUA = /mobi|android|iphone|ipad|ipod/.test(ua);
+      const isNarrow = window.innerWidth < 768;
+      setIsMobileDevice(isMobileUA || isNarrow);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Inicializar residente seleccionado en móvil según localStorage o usuario actual
+  useEffect(() => {
+    if (residents.length > 0 && !selectedResidentId) {
+      const cached = localStorage.getItem('mobile_duties_selected_resident');
+      if (cached && residents.some(r => r.id === cached)) {
+        setSelectedResidentId(cached);
+      } else {
+        const matching = residents.find(r => r.email?.toLowerCase() === user?.email?.toLowerCase());
+        setSelectedResidentId(matching ? matching.id : residents[0].id);
+      }
+    }
+  }, [residents, user, selectedResidentId]);
+
+  // Sincronizar selección de residente con localStorage
+  const handleSelectResidentMobile = (id: string) => {
+    setSelectedResidentId(id);
+    localStorage.setItem('mobile_duties_selected_resident', id);
+  };
+
+  // Inicializar día seleccionado por defecto (el de hoy si el mes coincide, o el día 1)
+  useEffect(() => {
+    const today = new Date();
+    if (selectedMonth && today.getFullYear() === selectedMonth.year && today.getMonth() === selectedMonth.monthIndex) {
+      setSelectedDay(today.getDate());
+    } else {
+      setSelectedDay(1);
+    }
+  }, [selectedMonth]);
+
   // Keep selectedMonth updated if it gets filtered out
   useEffect(() => {
     if (selectedMonth && !planningMonths.some(m => m.year === selectedMonth.year && m.monthIndex === selectedMonth.monthIndex)) {
@@ -702,6 +750,339 @@ const DutiesPlanner: React.FC = () => {
     setActiveCell(null);
   };
 
+  const WEEKDAYS_SHORT = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+
+  // Renderizar la vista de mis turnos para el residente seleccionado
+  const renderMisTurnosMobile = () => {
+    const resId = selectedResidentId || (sortedResidents[0]?.id);
+    if (!resId) return <div className="text-center text-xs text-slate-400 py-8">Cargando residentes...</div>;
+
+    const res = sortedResidents.find(r => r.id === resId);
+    if (!res) return null;
+
+    // Turnos de este residente en este mes
+    const monthPrefix = `${selectedMonth.year}-${String(selectedMonth.monthIndex + 1).padStart(2, '0')}-`;
+    const resDuties = duties.filter(d => d.residentId === resId && d.date.startsWith(monthPrefix));
+
+    return (
+      <div className="flex flex-col space-y-3.5">
+        {/* Selector de Residente */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-3 rounded-2xl shadow-xs">
+          <label className="block text-[9.5px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-1.5">Consultar Residente</label>
+          <select
+            value={resId}
+            onChange={(e) => handleSelectResidentMobile(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-750 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
+          >
+            {sortedResidents.map(r => (
+              <option key={r.id} value={r.id}>{r.firstName} {r.lastName} ({r.year})</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Timeline List */}
+        <div className="flex flex-col space-y-2">
+          {daysArray.map((dayNum) => {
+            const dateStr = `${selectedMonth.year}-${String(selectedMonth.monthIndex + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+            const duty = resDuties.find(d => d.date === dateStr);
+            const dateObj = new Date(selectedMonth.year, selectedMonth.monthIndex, dayNum);
+            const dayOfWeek = dateObj.getDay();
+            const weekdayName = WEEKDAYS_SHORT[dayOfWeek];
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isHoliday = duties.some(d => d.residentId === 'holiday' && d.date === dateStr);
+            const isRedDay = isWeekend || isHoliday;
+
+            // Determinar estilo y contenido del turno
+            let badgeBg = "bg-slate-100 dark:bg-slate-800 text-slate-655 dark:text-slate-350";
+            let label = "Mañana";
+            let desc = "Jornada habitual de mañana";
+
+            if (duty) {
+              if (duty.type === 'guardia') {
+                badgeBg = "bg-red-500 text-white shadow-xs";
+                label = "Guardia (G)";
+                desc = duty.notes ? `Guardia de 24h — Obs: ${duty.notes}` : "Guardia de 24 horas";
+              } else if (duty.type === 'rucot') {
+                badgeBg = "bg-blue-600 text-white shadow-xs";
+                label = "RUCOT (R)";
+                desc = duty.notes ? `Guardia obligatoria reducida — Obs: ${duty.notes}` : "Guardia RUCOT";
+              } else if (duty.type === 'rucot-guardia') {
+                badgeBg = "bg-gradient-to-r from-blue-600 to-red-500 text-white shadow-xs";
+                label = "RUCOT + Guardia (R+G)";
+                desc = duty.notes ? `RUCOT y Guardia el mismo día — Obs: ${duty.notes}` : "RUCOT + Guardia combinada";
+              } else if (duty.type === 'tarde' || duty.type === 'tarde-especial') {
+                badgeBg = "bg-orange-500 text-white shadow-xs";
+                label = duty.type === 'tarde-especial' ? "Tarde Especial (TE)" : "Tarde (T)";
+                desc = duty.notes ? `Actividad de tarde — Obs: ${duty.notes}` : "Jornada de tarde";
+              } else if (duty.type === 'saliente' || duty.type === 'saliente-manual') {
+                badgeBg = "bg-emerald-600 text-white shadow-xs";
+                label = "Saliente (S)";
+                desc = duty.notes ? `Descanso posguardia — Obs: ${duty.notes}` : "Saliente de guardia";
+              } else if (duty.type === 'curso') {
+                badgeBg = "bg-purple-500 text-white shadow-xs";
+                label = "Curso (C)";
+                desc = duty.notes ? `Formación/Curso — Obs: ${duty.notes}` : "Jornada formativa";
+              } else if (duty.type === 'vacaciones') {
+                badgeBg = "bg-teal-600 text-white shadow-xs";
+                label = "Vacaciones (V)";
+                desc = duty.notes ? `Vacaciones aprobadas — Obs: ${duty.notes}` : "Vacaciones";
+              } else if (duty.type === 'libre') {
+                badgeBg = "bg-slate-555 text-white shadow-xs";
+                label = "Libre (L)";
+                desc = duty.notes ? `Día libre — Obs: ${duty.notes}` : "Día libre";
+              }
+            } else {
+              // Si no tiene nada asignado explícitamente
+              if (isRedDay) {
+                badgeBg = "bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400/80 border border-red-200/50 dark:border-red-900/20";
+                label = "Libre";
+                desc = isHoliday ? "Día festivo nacional o local" : "Fin de semana";
+              }
+            }
+
+            return (
+              <div 
+                key={dayNum}
+                className={clsx(
+                  "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl shadow-2xs hover:border-slate-350 dark:hover:border-slate-700 transition-all",
+                  duty?.type === 'guardia' && "ring-1 ring-red-500/20 bg-red-50/[0.02] dark:bg-red-950/[0.02]",
+                  duty?.type === 'rucot' && "ring-1 ring-blue-500/20 bg-blue-50/[0.02] dark:bg-blue-950/[0.02]"
+                )}
+              >
+                {/* Date bubble */}
+                <div className="flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-slate-105 dark:bg-slate-950 shrink-0 select-none">
+                  <span className={clsx(
+                    "text-[8px] font-black uppercase tracking-wider leading-none mb-0.5",
+                    isRedDay ? "text-red-500" : "text-slate-450 dark:text-slate-500"
+                  )}>
+                    {weekdayName}
+                  </span>
+                  <span className={clsx(
+                    "text-sm font-black leading-none",
+                    isRedDay ? "text-red-500 font-extrabold" : "text-slate-700 dark:text-slate-200"
+                  )}>
+                    {dayNum}
+                  </span>
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={clsx(
+                      "text-[8.5px] font-black px-1.5 py-0.5 rounded leading-none uppercase tracking-wider",
+                      badgeBg
+                    )}>
+                      {label}
+                    </span>
+                    {duty?.notes && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Contiene observaciones" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Renderizar el carrusel de días horizontal
+  const renderCarruselDias = () => {
+    return (
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory mb-4">
+        {daysArray.map((dayNum) => {
+          const dateStr = `${selectedMonth.year}-${String(selectedMonth.monthIndex + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+          const isSelected = selectedDay === dayNum;
+          const today = new Date();
+          const isToday = today.getFullYear() === selectedMonth.year && today.getMonth() === selectedMonth.monthIndex && today.getDate() === dayNum;
+          
+          const dateObj = new Date(selectedMonth.year, selectedMonth.monthIndex, dayNum);
+          const dayOfWeek = dateObj.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          const isHoliday = duties.some(d => d.residentId === 'holiday' && d.date === dateStr);
+          const isRedDay = isWeekend || isHoliday;
+          
+          return (
+            <button
+              key={dayNum}
+              onClick={() => setSelectedDay(dayNum)}
+              className={clsx(
+                "flex flex-col items-center justify-center min-w-[3.25rem] w-[3.25rem] h-14 rounded-2xl border transition-all cursor-pointer snap-start shrink-0 select-none",
+                isSelected
+                  ? "bg-gradient-to-br from-teal-600 to-emerald-500 text-white border-teal-600 shadow-md scale-105"
+                  : isToday
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-teal-500 dark:border-teal-500/80 font-black"
+                    : isRedDay
+                      ? "bg-red-50/50 dark:bg-red-950/10 text-red-500 border-red-200/40 dark:border-red-900/10"
+                      : "bg-white dark:bg-slate-900 text-slate-655 dark:text-slate-400 border-slate-200/80 dark:border-slate-800"
+              )}
+            >
+              <span className="text-[8px] font-bold uppercase tracking-wider leading-none mb-1">
+                {WEEKDAYS_SHORT[dayOfWeek]}
+              </span>
+              <span className="text-sm font-black leading-none">
+                {dayNum}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderQuienEstaHoyMobile = () => {
+    const dateStr = `${selectedMonth.year}-${String(selectedMonth.monthIndex + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    
+    // Obtener los turnos del día para residentes reales
+    const dayDuties = duties.filter(d => d.date === dateStr && d.residentId !== 'holiday' && d.residentId !== 'mandatory-guard' && d.residentId !== 'mandatory-rucot');
+    
+    // Agrupación
+    const guardias: string[] = [];
+    const rucots: string[] = [];
+    const tardes: string[] = [];
+    const salientes: string[] = [];
+    const otros: { name: string; label: string; bg: string }[] = [];
+
+    sortedResidents.forEach(res => {
+      const duty = dayDuties.find(d => d.residentId === res.id);
+      const fullName = `${res.firstName} ${res.lastName}`;
+      if (duty) {
+        if (duty.type === 'guardia') {
+          guardias.push(fullName);
+        } else if (duty.type === 'rucot') {
+          rucots.push(fullName);
+        } else if (duty.type === 'rucot-guardia') {
+          guardias.push(fullName);
+          rucots.push(fullName);
+        } else if (duty.type === 'tarde' || duty.type === 'tarde-especial') {
+          tardes.push(fullName);
+        } else if (duty.type === 'saliente' || duty.type === 'saliente-manual') {
+          salientes.push(fullName);
+        } else if (duty.type === 'curso') {
+          otros.push({ name: fullName, label: 'Curso (C)', bg: 'bg-purple-500' });
+        } else if (duty.type === 'vacaciones') {
+          otros.push({ name: fullName, label: 'Vacaciones (V)', bg: 'bg-teal-600' });
+        } else if (duty.type === 'libre') {
+          otros.push({ name: fullName, label: 'Libre (L)', bg: 'bg-slate-500' });
+        }
+      }
+    });
+
+    const isGroupEmpty = guardias.length === 0 && rucots.length === 0 && tardes.length === 0 && salientes.length === 0 && otros.length === 0;
+
+    return (
+      <div className="flex flex-col space-y-3.5">
+        {/* Carrusel de días */}
+        {renderCarruselDias()}
+
+        {/* Tarjetas de Grupos */}
+        <div className="flex flex-col space-y-3">
+          {isGroupEmpty ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-8 text-center">
+              <CalendarCheck className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+              <p className="text-xs text-slate-500 dark:text-slate-455 font-bold uppercase tracking-wider">Sin turnos asignados</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1">Todos los residentes realizan jornada de mañana o están libres.</p>
+            </div>
+          ) : (
+            <>
+              {/* Guardia */}
+              {guardias.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Guardias ({guardias.length})</h3>
+                  </div>
+                  <ul className="grid grid-cols-2 gap-2">
+                    {guardias.map(name => (
+                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* RUCOT */}
+              {rucots.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                    <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">RUCOTs ({rucots.length})</h3>
+                  </div>
+                  <ul className="grid grid-cols-2 gap-2">
+                    {rucots.map(name => (
+                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Tardes */}
+              {tardes.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-orange-500" />
+                    <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Tardes ({tardes.length})</h3>
+                  </div>
+                  <ul className="grid grid-cols-2 gap-2">
+                    {tardes.map(name => (
+                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Salientes */}
+              {salientes.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Salientes ({salientes.length})</h3>
+                  </div>
+                  <ul className="grid grid-cols-2 gap-2">
+                    {salientes.map(name => (
+                      <li key={name} className="text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Otros turnos */}
+              {otros.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-slate-500" />
+                    <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Otros Turnos ({otros.length})</h3>
+                  </div>
+                  <ul className="flex flex-col space-y-2">
+                    {otros.map(item => (
+                      <li key={item.name} className="flex items-center justify-between text-xs font-bold text-slate-655 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/20 px-3 py-2 rounded-xl border border-slate-200/40 dark:border-slate-800/40">
+                        <span>{item.name}</span>
+                        <span className={clsx("text-[8px] font-black text-white px-1.5 py-0.5 rounded uppercase leading-none tracking-wider shadow-3xs", item.bg)}>
+                          {item.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-2 lg:space-y-2.5 overflow-hidden px-0 pb-0 lg:px-4 lg:pb-4">
       
@@ -774,7 +1155,52 @@ const DutiesPlanner: React.FC = () => {
       </div>
 
       {/* PIZARRA BOARD LAYOUT */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-slate-900/40 rounded-none md:rounded-2xl border-y md:border border-slate-200 dark:border-slate-800/80 shadow-xs flex flex-col overflow-hidden">
+      {isMobileDevice ? (
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 flex flex-col overflow-hidden rounded-none md:rounded-2xl border-y md:border border-slate-200 dark:border-slate-800/80 shadow-xs">
+          {/* Pestañas superiores */}
+          <div className="flex border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-900/10">
+            <button
+              onClick={() => setMobileTab('mis-turnos')}
+              className={clsx(
+                "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all cursor-pointer",
+                mobileTab === 'mis-turnos'
+                  ? "border-teal-500 text-teal-600 dark:text-teal-400 font-extrabold"
+                  : "border-transparent text-slate-500 hover:text-slate-750 dark:text-slate-400"
+              )}
+            >
+              Mis Turnos
+            </button>
+            <button
+              onClick={() => setMobileTab('quien-esta')}
+              className={clsx(
+                "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all cursor-pointer",
+                mobileTab === 'quien-esta'
+                  ? "border-teal-500 text-teal-600 dark:text-teal-400 font-extrabold"
+                  : "border-transparent text-slate-500 hover:text-slate-750 dark:text-slate-400"
+              )}
+            >
+              ¿Quién está hoy?
+            </button>
+          </div>
+
+          {/* Contenido de la pestaña */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 bg-slate-50/30 dark:bg-slate-950/10">
+            {mobileTab === 'mis-turnos' ? renderMisTurnosMobile() : renderQuienEstaHoyMobile()}
+          </div>
+
+          {/* Botón discreto para forzar modo Excel */}
+          <div className="px-3.5 py-2.5 border-t border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-950 text-center shrink-0">
+            <button
+              onClick={() => setIsMobileDevice(false)}
+              className="text-[9.5px] font-black uppercase text-teal-600 dark:text-teal-400 tracking-widest hover:underline cursor-pointer"
+            >
+              Ver Tabla Completa (Modo Excel)
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* VISTA DESKTOP CLÁSICA */
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-900/40 rounded-none md:rounded-2xl border-y md:border border-slate-200 dark:border-slate-800/80 shadow-xs flex flex-col overflow-hidden">
         
         {/* Table container with horizontal scroll */}
         <div className="flex-1 min-h-0 overflow-auto max-w-full">
@@ -1259,6 +1685,7 @@ const DutiesPlanner: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* EDIT DUTY MODAL */}
       {activeCell && canEdit && (
