@@ -90,6 +90,7 @@ const DutiesPlanner: React.FC = () => {
   const [selectedResidentId, setSelectedResidentId] = useState<string>('');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [expandedDaysMobile, setExpandedDaysMobile] = useState<Set<string>>(new Set());
+  const [showLegendMobile, setShowLegendMobile] = useState(false);
 
   const toggleDayExpansionMobile = (key: string) => {
     setExpandedDaysMobile(prev => {
@@ -1166,6 +1167,8 @@ const DutiesPlanner: React.FC = () => {
     );
   };
 
+  const isMobileUI = typeof window !== 'undefined' && (window.innerWidth < 1024 || /mobi|android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()));
+
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-2 lg:space-y-2.5 overflow-hidden px-0 pb-0 lg:px-4 lg:pb-4">
       
@@ -1407,81 +1410,96 @@ const DutiesPlanner: React.FC = () => {
                       {/* Resident Info Block */}
                       <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 mobile-duties-name-col lg:w-72 lg:min-w-[18rem] px-2 py-2 sm:px-3 sm:py-2.5 lg:py-0.5 lg:px-1.5 border-r border-b border-slate-200 border-b-slate-150 dark:border-slate-800 dark:border-b-slate-800/80">
                         <div className="flex items-center gap-1.5 sm:gap-2.5 w-full h-full bg-white dark:bg-slate-900">
-                          <div className="w-14 h-14 lg:w-7 lg:h-7 rounded-full bg-gradient-to-tr from-teal-700 to-emerald-500 flex items-center justify-center shrink-0 border border-teal-600/20 shadow-2xs">
-                            <span className="text-[36px] lg:text-[10px] font-black text-white">{res.firstName[0]}{res.lastName?.[0] || ''}</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[32px] lg:text-xs font-black text-slate-800 dark:text-slate-200 truncate leading-tight" title={`${res.firstName} ${res.lastName}`}>
-                              {res.firstName} {res.lastName}
-                            </p>
-                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                              <span className="inline-block text-[24px] lg:text-[8px] font-extrabold px-0.5 sm:px-1 rounded-sm bg-slate-100 text-slate-655 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/30 font-mono">
+                          {isMobileUI ? (
+                            /* VISTA SIMPLIFICADA MÓVIL (Apellido + Año) */
+                            <div className="min-w-0 flex-1 flex items-center justify-between gap-1 w-full px-1">
+                              <p className="text-[12px] font-black text-slate-800 dark:text-slate-200 truncate leading-tight" title={`${res.firstName} ${res.lastName}`}>
+                                {res.lastName}
+                              </p>
+                              <span className="inline-block text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-655 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/30 font-mono shrink-0 select-none leading-none tracking-wider">
                                 {res.year}
                               </span>
-                              {/* Shift count balance badge */}
-                              {(() => {
-                                const bal = getResidentDutyBalance(res.id);
-                                if (bal === 0) return null;
-                                const isPositive = bal > 0;
-                                const formatted = isPositive ? `+${bal}` : `${bal}`;
-                                return (
-                                  <span className={clsx(
-                                    "text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border",
-                                    isPositive 
-                                      ? "bg-emerald-50 text-emerald-600 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40" 
-                                      : "bg-red-50 text-red-600 border-red-250 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
-                                  )} title="Balance de turnos">
-                                    {formatted}
-                                  </span>
-                                );
-                              })()}
-
-                              {/* Monthly guards count badge */}
-                              {(() => {
-                                const guardsCount = getMonthlyGuardsCount(res.id);
-                                return (
-                                  <span className="text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border bg-red-50 text-red-600 border-red-250 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" title="Guardias este mes">
-                                    G: {guardsCount}
-                                  </span>
-                                );
-                              })()}
-
-                              {/* Annual remaining free days badge */}
-                              {(() => {
-                                const remainingFreeDays = getAnnualFreeDaysRemaining(res.id);
-                                return (
-                                  <span className={clsx(
-                                    "text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border",
-                                    remainingFreeDays === 0
-                                      ? "bg-slate-150 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                                      : "bg-teal-50 text-teal-600 border-teal-250 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/40"
-                                  )} title="Días libres anuales restantes (Máx 4/año)">
-                                    L: {remainingFreeDays}
-                                  </span>
-                                );
-                              })()}
-
-                              {/* Rotation badge (inline next to the others!) */}
-                              {(() => {
-                                const rot = rotations.find(
-                                  r => r.residentId === res.id && r.month === selectedMonth.monthIndex && r.year === selectedMonth.year
-                                );
-                                if (!rot) return null;
-                                const unit = units.find(u => u.id === rot.unitId);
-                                const color = getColor(unit?.color ?? 'slate');
-                                const rotName = rot.customName || (unit ? unit.name : 'Desconocida');
-                                return (
-                                  <span className={clsx(
-                                    "inline-flex items-center gap-1 text-[24px] lg:text-[8px] font-black px-1 rounded-sm border border-solid",
-                                    color.bg, color.text, color.border
-                                  )} title={`Rotación: ${rotName}`}>
-                                    <span className="inline-block w-1.5 h-1.5 lg:w-1 lg:h-1 rounded-full bg-white dark:bg-slate-900 shrink-0" />
-                                    <span className="truncate max-w-[50px] sm:max-w-[80px]">{rotName}</span>
-                                  </span>
-                                );
-                              })()}
                             </div>
-                          </div>
+                          ) : (
+                            /* VISTA ESCRITORIO COMPLETA (Avatar + Nombre + Badges) */
+                            <>
+                              <div className="w-14 h-14 lg:w-7 lg:h-7 rounded-full bg-gradient-to-tr from-teal-700 to-emerald-500 flex items-center justify-center shrink-0 border border-teal-600/20 shadow-2xs">
+                                <span className="text-[36px] lg:text-[10px] font-black text-white">{res.firstName[0]}{res.lastName?.[0] || ''}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[32px] lg:text-xs font-black text-slate-800 dark:text-slate-200 truncate leading-tight" title={`${res.firstName} ${res.lastName}`}>
+                                  {res.firstName} {res.lastName}
+                                </p>
+                                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                  <span className="inline-block text-[24px] lg:text-[8px] font-extrabold px-0.5 sm:px-1 rounded-sm bg-slate-100 text-slate-655 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/30 font-mono">
+                                    {res.year}
+                                  </span>
+                                  {/* Shift count balance badge */}
+                                  {(() => {
+                                    const bal = getResidentDutyBalance(res.id);
+                                    if (bal === 0) return null;
+                                    const isPositive = bal > 0;
+                                    const formatted = isPositive ? `+${bal}` : `${bal}`;
+                                    return (
+                                      <span className={clsx(
+                                        "text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border",
+                                        isPositive 
+                                          ? "bg-emerald-50 text-emerald-600 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40" 
+                                          : "bg-red-50 text-red-600 border-red-250 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
+                                      )} title="Balance de turnos">
+                                        {formatted}
+                                      </span>
+                                    );
+                                  })()}
+
+                                  {/* Monthly guards count badge */}
+                                  {(() => {
+                                    const guardsCount = getMonthlyGuardsCount(res.id);
+                                    return (
+                                      <span className="text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border bg-red-50 text-red-600 border-red-250 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" title="Guardias este mes">
+                                        G: {guardsCount}
+                                      </span>
+                                    );
+                                  })()}
+
+                                  {/* Annual remaining free days badge */}
+                                  {(() => {
+                                    const remainingFreeDays = getAnnualFreeDaysRemaining(res.id);
+                                    return (
+                                      <span className={clsx(
+                                        "text-[24px] lg:text-[8px] font-black font-mono px-0.5 sm:px-1 rounded-sm border",
+                                        remainingFreeDays === 0
+                                          ? "bg-slate-150 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                                          : "bg-teal-50 text-teal-600 border-teal-250 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/40"
+                                      )} title="Días libres anuales restantes (Máx 4/año)">
+                                        L: {remainingFreeDays}
+                                      </span>
+                                    );
+                                  })()}
+
+                                  {/* Rotation badge (inline next to the others!) */}
+                                  {(() => {
+                                    const rot = rotations.find(
+                                      r => r.residentId === res.id && r.month === selectedMonth.monthIndex && r.year === selectedMonth.year
+                                    );
+                                    if (!rot) return null;
+                                    const unit = units.find(u => u.id === rot.unitId);
+                                    const color = getColor(unit?.color ?? 'slate');
+                                    const rotName = rot.customName || (unit ? unit.name : 'Desconocida');
+                                    return (
+                                      <span className={clsx(
+                                        "inline-flex items-center gap-1 text-[24px] lg:text-[8px] font-black px-1 rounded-sm border border-solid",
+                                        color.bg, color.text, color.border
+                                      )} title={`Rotación: ${rotName}`}>
+                                        <span className="inline-block w-1.5 h-1.5 lg:w-1 lg:h-1 rounded-full bg-white dark:bg-slate-900 shrink-0" />
+                                        <span className="truncate max-w-[50px] sm:max-w-[80px]">{rotName}</span>
+                                      </span>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </td>
 
@@ -1705,66 +1723,99 @@ const DutiesPlanner: React.FC = () => {
         </div>
 
         {/* BOTTOM PANEL / LEGEND */}
-        <div className="px-3 py-2 md:px-6 md:py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 md:gap-6">
-            <span className="text-[10px] md:text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Leyenda:</span>
+        <div className="px-3 py-2 md:px-6 md:py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
+          {/* Legend toggle header */}
+          <div 
+            onClick={() => isMobileUI && setShowLegendMobile(prev => !prev)}
+            className={clsx(
+              "flex items-center justify-between select-none py-1 w-full",
+              isMobileUI ? "cursor-pointer active:bg-slate-200/20 dark:active:bg-slate-800/10 rounded-lg px-2" : "pointer-events-none"
+            )}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] md:text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Leyenda</span>
+              {isMobileUI && (
+                <ChevronDown className={clsx(
+                  "w-4 h-4 text-slate-450 transition-transform duration-200",
+                  showLegendMobile && "rotate-180 text-teal-505"
+                )} />
+              )}
+            </div>
             
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-red-500 text-white flex items-center justify-center text-xs font-black border border-red-600 shadow-2xs">G</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Guardia</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-teal-800 text-white flex items-center justify-center text-xs font-black border border-teal-900 shadow-2xs">S</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Saliente</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-orange-500 text-white flex items-center justify-center text-xs font-black border border-orange-600 shadow-2xs">T</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Tarde</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center text-xs font-black border border-teal-755 shadow-2xs">L</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Libre</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-yellow-400 text-slate-900 flex items-center justify-center text-xs font-black border border-yellow-500 shadow-2xs">M</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Mañana</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center text-xs font-black border border-teal-755 shadow-2xs">V</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Vacaciones</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xs font-black border border-teal-400/50 dark:border-teal-500/50 border-dashed shadow-2xs">V?</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Vacación Pendiente</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-purple-400 text-white flex items-center justify-center text-xs font-black border border-purple-500 shadow-2xs">C</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Curso</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center text-xs font-black border border-blue-700 shadow-2xs">R</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">RUCOT</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-md relative overflow-hidden border border-slate-200 dark:border-slate-850 shadow-2xs">
-                <div className="absolute inset-0 flex items-start justify-start p-0.5 text-[8px] font-black leading-none bg-blue-600 text-white" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}>R</div>
-                <div className="absolute inset-0 flex items-end justify-end p-0.5 text-[8px] font-black leading-none bg-red-500 text-white" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}>G</div>
-              </div>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">RUCOT + Guardia</span>
+            <div className="hidden md:block text-[10px] md:text-[10px] font-medium text-slate-400 dark:text-slate-500">
+              * Celdas con punto blanco contienen observaciones.
             </div>
           </div>
 
-          <div className="text-[10px] md:text-[10px] font-medium text-slate-400 dark:text-slate-500">
-            * Celdas con punto blanco contienen observaciones.
+          {/* Collapsible content wrapper */}
+          <div className={clsx(
+            "transition-all duration-200 overflow-hidden md:flex md:flex-row md:items-center md:justify-between md:max-h-none md:opacity-100 md:mt-0",
+            isMobileUI 
+              ? showLegendMobile 
+                ? "flex flex-col max-h-[500px] opacity-100 mt-2 gap-3" 
+                : "max-h-0 opacity-0 pointer-events-none" 
+              : "flex"
+          )}>
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 md:gap-6">
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-red-500 text-white flex items-center justify-center text-xs font-black border border-red-600 shadow-2xs">G</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Guardia</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-teal-800 text-white flex items-center justify-center text-xs font-black border border-teal-900 shadow-2xs">S</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Saliente</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-orange-500 text-white flex items-center justify-center text-xs font-black border border-orange-600 shadow-2xs">T</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Tarde</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center text-xs font-black border border-teal-755 shadow-2xs">L</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Libre</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-yellow-400 text-slate-900 flex items-center justify-center text-xs font-black border border-yellow-500 shadow-2xs">M</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Mañana</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center text-xs font-black border border-teal-755 shadow-2xs">V</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Vacaciones</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-teal-500/15 text-teal-655 dark:text-teal-400 flex items-center justify-center text-xs font-black border border-teal-400/50 dark:border-teal-500/50 border-dashed shadow-2xs">V?</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Vacación Pendiente</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-purple-400 text-white flex items-center justify-center text-xs font-black border border-purple-500 shadow-2xs">C</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Curso</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center text-xs font-black border border-blue-700 shadow-2xs">R</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">RUCOT</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-md relative overflow-hidden border border-slate-200 dark:border-slate-850 shadow-2xs">
+                  <div className="absolute inset-0 flex items-start justify-start p-0.5 text-[8px] font-black leading-none bg-blue-600 text-white" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}>R</div>
+                  <div className="absolute inset-0 flex items-end justify-end p-0.5 text-[8px] font-black leading-none bg-red-500 text-white" style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}>G</div>
+                </div>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">RUCOT + Guardia</span>
+              </div>
+            </div>
+            
+            {isMobileUI && (
+              <div className="text-[9.5px] font-medium text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-900 mt-1 w-full">
+                * Celdas con punto blanco contienen observaciones.
+              </div>
+            )}
           </div>
         </div>
       </div>
